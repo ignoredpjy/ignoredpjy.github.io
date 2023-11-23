@@ -2,9 +2,9 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
   <channel>
     <title> 兴趣 on PJY&#39;s Blog</title>
-    <link>/posts/ints/</link>
+    <link>https://ignoredpjy.github.io/posts/ints/</link>
     <description>Recent content in  兴趣 on PJY&#39;s Blog</description>
     <generator>Hugo -- gohugo.io</generator>
-    <copyright>build by pjy</copyright><atom:link href="/posts/ints/index.xml" rel="self" type="application/rss+xml" />
+    <copyright>build by pjy</copyright><atom:link href="https://ignoredpjy.github.io/posts/ints/index.xml" rel="self" type="application/rss+xml" />
   </channel>
 </rss>
