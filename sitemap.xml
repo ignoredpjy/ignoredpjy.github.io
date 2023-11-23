@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+  xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  <url>
+    <loc>/posts/study/</loc>
+  </url><url>
+    <loc>/posts/tech/</loc>
+  </url><url>
+    <loc>/posts/life/</loc>
+  </url><url>
+    <loc>/posts/</loc>
+  </url><url>
+    <loc>/posts/ints/</loc>
+  </url><url>
+    <loc>/posts/fun/</loc>
+  </url><url>
+    <loc>/archives/</loc>
+  </url><url>
+    <loc>/search/</loc>
+  </url><url>
+    <loc>/tags/</loc>
+  </url><url>
+    <loc>/categories/</loc>
+  </url><url>
+    <loc>/</loc>
+  </url>
+</urlset>
