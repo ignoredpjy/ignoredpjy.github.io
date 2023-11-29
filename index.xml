@@ -1212,7 +1212,7 @@ NESTED （子事务） 外围方法未开启事务
 </span><span class="lnt" id="hl-14-5"><a class="lnlinks" href="#hl-14-5">5</a>
 </span></code></pre></td>
 <td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="line"><span class="cl"><span class="c1"># add . + commit ,携带message</span>
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="line"><span class="cl"><span class="c1"># commit所有 ,携带message</span>
 </span></span><span class="line"><span class="cl">$ git commit -am <span class="o">[</span>message<span class="o">]</span>
 </span></span><span class="line"><span class="cl">
 </span></span><span class="line"><span class="cl"><span class="c1"># 覆盖上一次提交并重写message，不会增加提交次数，好用</span>
