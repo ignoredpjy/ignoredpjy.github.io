@@ -13,7 +13,7 @@
       <pubDate>Wed, 23 Jun 2021 22:17:36 +0800</pubDate>
       
       <guid>https://ignoredpjy.github.io/posts/study/git%E6%8C%87%E5%8D%97/</guid>
-      <description>使用git以来，有一些知识，不用就会含糊不清，稍作整理方便查阅，可能不适合所有人</description>
+      <description>使用git以来，有一些知识，不用就会记忆含糊不清，以自己理解的方式稍作整理，方便查阅</description>
       <content:encoded><![CDATA[<h2 id="使用git之前">使用git之前</h2>
 <p>git 的 配置文件有三个 分别是 system、global、local</p>
 <ul>
@@ -108,16 +108,62 @@
 </span></span></code></pre></td></tr></table>
 </div>
 </div><p><strong>.gitignore</strong></p>
-<p>基本每个仓库都含有的<strong>忽略文件</strong>，用来配置 git 忽略哪些文件</p>
-<p>常需要忽略一些 集成开发环境配置目录 和 代码打包目录</p>
+<p>基本每个仓库都含有的<strong>忽略配置</strong>，用来配置 git 忽略哪些目录和文件 ,（git config命令也能配置ignore，不过应该没人这么用）</p>
+<p>常需要忽略一些 集成开发环境配置目录 、 代码打包目录 、日志文件 ，避免多人开发时影响其他人，比如 java配置如下：</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre tabindex="0" class="chroma"><code></code></pre></td>
+<pre tabindex="0" class="chroma"><code><span class="lnt" id="hl-2-1"><a class="lnlinks" href="#hl-2-1"> 1</a>
+</span><span class="lnt" id="hl-2-2"><a class="lnlinks" href="#hl-2-2"> 2</a>
+</span><span class="lnt" id="hl-2-3"><a class="lnlinks" href="#hl-2-3"> 3</a>
+</span><span class="lnt" id="hl-2-4"><a class="lnlinks" href="#hl-2-4"> 4</a>
+</span><span class="lnt" id="hl-2-5"><a class="lnlinks" href="#hl-2-5"> 5</a>
+</span><span class="lnt" id="hl-2-6"><a class="lnlinks" href="#hl-2-6"> 6</a>
+</span><span class="lnt" id="hl-2-7"><a class="lnlinks" href="#hl-2-7"> 7</a>
+</span><span class="lnt" id="hl-2-8"><a class="lnlinks" href="#hl-2-8"> 8</a>
+</span><span class="lnt" id="hl-2-9"><a class="lnlinks" href="#hl-2-9"> 9</a>
+</span><span class="lnt" id="hl-2-10"><a class="lnlinks" href="#hl-2-10">10</a>
+</span><span class="lnt" id="hl-2-11"><a class="lnlinks" href="#hl-2-11">11</a>
+</span><span class="lnt" id="hl-2-12"><a class="lnlinks" href="#hl-2-12">12</a>
+</span><span class="lnt" id="hl-2-13"><a class="lnlinks" href="#hl-2-13">13</a>
+</span><span class="lnt" id="hl-2-14"><a class="lnlinks" href="#hl-2-14">14</a>
+</span><span class="lnt" id="hl-2-15"><a class="lnlinks" href="#hl-2-15">15</a>
+</span><span class="lnt" id="hl-2-16"><a class="lnlinks" href="#hl-2-16">16</a>
+</span><span class="lnt" id="hl-2-17"><a class="lnlinks" href="#hl-2-17">17</a>
+</span><span class="lnt" id="hl-2-18"><a class="lnlinks" href="#hl-2-18">18</a>
+</span><span class="lnt" id="hl-2-19"><a class="lnlinks" href="#hl-2-19">19</a>
+</span><span class="lnt" id="hl-2-20"><a class="lnlinks" href="#hl-2-20">20</a>
+</span><span class="lnt" id="hl-2-21"><a class="lnlinks" href="#hl-2-21">21</a>
+</span><span class="lnt" id="hl-2-22"><a class="lnlinks" href="#hl-2-22">22</a>
+</span><span class="lnt" id="hl-2-23"><a class="lnlinks" href="#hl-2-23">23</a>
+</span></code></pre></td>
 <td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"></code></pre></td></tr></table>
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">### MAVEN ###
+</span></span><span class="line"><span class="cl">target/
+</span></span><span class="line"><span class="cl">out/
+</span></span><span class="line"><span class="cl">*.class
+</span></span><span class="line"><span class="cl">*.jar
+</span></span><span class="line"><span class="cl">*.war
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">### IDE ###
+</span></span><span class="line"><span class="cl">.idea/
+</span></span><span class="line"><span class="cl">*.http
+</span></span><span class="line"><span class="cl">*.iws
+</span></span><span class="line"><span class="cl">*.iml
+</span></span><span class="line"><span class="cl">*.ipr
+</span></span><span class="line"><span class="cl">.vscode/
+</span></span><span class="line"><span class="cl">.classpath
+</span></span><span class="line"><span class="cl">.factorypath
+</span></span><span class="line"><span class="cl">.project
+</span></span><span class="line"><span class="cl">.settings
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">### LOG ###
+</span></span><span class="line"><span class="cl">*.log
+</span></span><span class="line"><span class="cl">*.txt
+</span></span><span class="line"><span class="cl">*.temp
+</span></span></code></pre></td></tr></table>
 </div>
 </div><h2 id="查看的命令">查看的命令</h2>
-<p>常用的一些查看详情的命令</p>
+<p>常用的一些查看详情的命令，当然使用IDE开发的话，这些命令基本用不到了。</p>
 <p>最常用</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
@@ -239,13 +285,9 @@
 </span><span class="lnt" id="hl-6-15"><a class="lnlinks" href="#hl-6-15">15</a>
 </span><span class="lnt" id="hl-6-16"><a class="lnlinks" href="#hl-6-16">16</a>
 </span><span class="lnt" id="hl-6-17"><a class="lnlinks" href="#hl-6-17">17</a>
-</span><span class="lnt" id="hl-6-18"><a class="lnlinks" href="#hl-6-18">18</a>
-</span><span class="lnt" id="hl-6-19"><a class="lnlinks" href="#hl-6-19">19</a>
 </span></code></pre></td>
 <td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl"><span class="c1"># 显示所有提交过的用户，按提交次数排序</span>
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="line"><span class="cl"><span class="c1"># 显示所有提交过的用户，按提交次数排序</span>
 </span></span><span class="line"><span class="cl">$ git shortlog -sn
 </span></span><span class="line"><span class="cl">
 </span></span><span class="line"><span class="cl"><span class="c1"># 显示指定文件是什么人在什么时间修改过</span>
@@ -450,6 +492,19 @@
 <p><strong>push 之前 的 commit 可以用 reset，已push的commit 一定用revert</strong></p>
 <p><strong>因为，本地操作失误的reset，可以用 reflog 抢救</strong></p>
 </blockquote>
+<h2 id="git-relogresore补救">git relog（resore补救）</h2>
+<p><strong>找回已删除的内容</strong></p>
+<p>虽说 Git 是一款强大的版本管理工具，一般来说，提交到代码库的内容不用担心丢失，然而某些特殊情况下仍免不了要做抢救找回，例如不恰当的 reset、错删分支等。这就是 <code>git reflog</code>派上用场的时候了。</p>
+<p>“git reflog”是恢复本地历史的强力工具，几乎可以恢复所有本地记录，例如被 reset 丢弃掉的 commit、被删掉的分支等，称得上代码找回的“最后一根救命稻草”。</p>
+<p>然而需要注意，<strong>并非真正所有记录”git reflog”都能够恢复</strong>，有些情况仍然无能为力：</p>
+<ol>
+<li><strong>非本地操作的记录</strong>
+“git reflog”能管理的是本地工作区操作记录，非本地（如其他人或在其他机器上）的记录它就无从知晓了。</li>
+<li><strong>未 commit 的内容</strong>
+例如只在工作区或暂存区被回滚的内容（git checkout – 文件 或 git reset HEAD 文件）。</li>
+<li><strong>太久远的内容</strong>
+“git reflog”保留的记录有一定时间限制（默认 90 天），超时的会被自动清理。另外如果主动执行清理命令也会提前清理掉。</li>
+</ol>
 <h2 id="提交操作">提交操作</h2>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
@@ -650,7 +705,11 @@
 </span></span></code></pre></td></tr></table>
 </div>
 </div><p><strong>FETCH_HEAD</strong></p>
-<p>待续</p>
+<p>在 Git 中，<code>FETCH_HEAD</code> 是一个记录着上次 <code>git fetch</code> 命令所抓取下来的远程分支的快照的引用，也可以被看作是一个指向最新抓取下来的提交的指针。</p>
+<p>当你使用 <code>git fetch</code> 命令从远程仓库拉取最新的代码时，Git 会把最新的提交记录保存在本地的 <code>FETCH_HEAD</code> 引用中。此时，你可以使用 <code>git merge FETCH_HEAD</code> 命令将本地分支合并到 <code>FETCH_HEAD</code> 所指向的最新提交。</p>
+<p><strong>需要注意的是</strong>，<code>FETCH_HEAD</code> 引用只会在下一次执行 <code>git fetch</code> 命令时被更新。如果你希望在当前分支中使用最新的提交记录，你需要先执行 <code>git fetch</code> 命令来更新 <code>FETCH_HEAD</code>，然后再使用 <code>git merge FETCH_HEAD</code> 命令来合并最新的提交记录。</p>
+<p><strong>git prune</strong></p>
+<p>清理远程分支在本地的存档，与fetch操作相反，不常用，解决fetch报错</p>
 <h2 id="tag标签">tag标签</h2>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
@@ -710,12 +769,148 @@
 </span></span><span class="line"><span class="cl">$ git checkout -b <span class="o">[</span>branch<span class="o">]</span> <span class="o">[</span>tag<span class="o">]</span>
 </span></span></code></pre></td></tr></table>
 </div>
-</div><h2 id="starch">starch</h2>
+</div><h2 id="squach">squach</h2>
+<p>在开发一个功能的时候会反复的提交代码，会造成一个功能有很多次提交，在我们要向master做分支合并的时候，就会出现很多commits，在合并以后同一个功能的commits就会很多，导致我们无法清晰的知道这个功能关联的commit有哪些，这个squash就是优化我们的commits信息，让我们的版本仓库看起来简洁明了，功能点一目了然。</p>
+<p>使用比较简单，比如我想将本地开发分支的内容合并到master主线分支上，并且期望将一个功能的所有提交压缩成一个commit；</p>
+<p>有两种方法可以实现 Git 压缩：</p>
+<ul>
+<li>git rebase -i 作为用于压缩提交的交互式工具</li>
+<li>git merge -squash 在合并时使用 -squash 选项</li>
+</ul>
+<p><strong>使用 git rebase -i</strong></p>
+<p>先checkout master分支并做本地分支和远程仓库同步</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
 <pre tabindex="0" class="chroma"><code><span class="lnt" id="hl-26-1"><a class="lnlinks" href="#hl-26-1">1</a>
 </span><span class="lnt" id="hl-26-2"><a class="lnlinks" href="#hl-26-2">2</a>
-</span><span class="lnt" id="hl-26-3"><a class="lnlinks" href="#hl-26-3">3</a>
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">git checkout master
+</span></span><span class="line"><span class="cl">git pull
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>（一定要做同步，若本地代码和远端仓库不同步的话，就会出现很多远端的修改进入我们的squash时的commits当中）</p>
+<p>切换到开发分支 dev ， 并执行commits合并操作</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt" id="hl-27-1"><a class="lnlinks" href="#hl-27-1"> 1</a>
+</span><span class="lnt" id="hl-27-2"><a class="lnlinks" href="#hl-27-2"> 2</a>
+</span><span class="lnt" id="hl-27-3"><a class="lnlinks" href="#hl-27-3"> 3</a>
+</span><span class="lnt" id="hl-27-4"><a class="lnlinks" href="#hl-27-4"> 4</a>
+</span><span class="lnt" id="hl-27-5"><a class="lnlinks" href="#hl-27-5"> 5</a>
+</span><span class="lnt" id="hl-27-6"><a class="lnlinks" href="#hl-27-6"> 6</a>
+</span><span class="lnt" id="hl-27-7"><a class="lnlinks" href="#hl-27-7"> 7</a>
+</span><span class="lnt" id="hl-27-8"><a class="lnlinks" href="#hl-27-8"> 8</a>
+</span><span class="lnt" id="hl-27-9"><a class="lnlinks" href="#hl-27-9"> 9</a>
+</span><span class="lnt" id="hl-27-10"><a class="lnlinks" href="#hl-27-10">10</a>
+</span><span class="lnt" id="hl-27-11"><a class="lnlinks" href="#hl-27-11">11</a>
+</span><span class="lnt" id="hl-27-12"><a class="lnlinks" href="#hl-27-12">12</a>
+</span><span class="lnt" id="hl-27-13"><a class="lnlinks" href="#hl-27-13">13</a>
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="line"><span class="cl">git checkout dev
+</span></span><span class="line"><span class="cl">git rebase -i master
+</span></span><span class="line"><span class="cl"> <span class="c1"># 执行上面的语句后，会进入以下编辑界面</span>
+</span></span><span class="line"><span class="cl"> pick xxx: commit1 add : add xxx 
+</span></span><span class="line"><span class="cl"> pick xxx: commit2 fix: update xxxx
+</span></span><span class="line"><span class="cl"> pick xxx: commit3 fix: delete xxx
+</span></span><span class="line"><span class="cl"> pick xxx: commit4 modify : update xxxx 
+</span></span><span class="line"><span class="cl"><span class="c1"># 进入编辑模式，将除第一行的pick外，其余的pick都改成 squash（或 s），</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># 退出编辑模式，保存即可</span>
+</span></span><span class="line"><span class="cl"> pick xxx: commit1 add : add xxx 
+</span></span><span class="line"><span class="cl"> squash xxx: commit2 fix: update xxxx
+</span></span><span class="line"><span class="cl"> squash xxx: commit3 fix: delete xxx
+</span></span><span class="line"><span class="cl"> squash xxx: commit4 modify : update xxxx 
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>以上操作顺利的话，我们执行以下操作即可：</p>
+<p>git push -f 注意：squash操作后你的提交信息就变成了一次提交，会记录你之前的提交的描述信息，但是已经看不到相关的提交记录了；</p>
+<p>看了资料以后，git 在merge的时候提供了这种squash merge的操作方式，未有实践，这里也做个记录：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt" id="hl-28-1"><a class="lnlinks" href="#hl-28-1">1</a>
+</span><span class="lnt" id="hl-28-2"><a class="lnlinks" href="#hl-28-2">2</a>
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="line"><span class="cl">git checkout master
+</span></span><span class="line"><span class="cl">git merge --squash dev
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>这样可以在master节点上只看到一个提交，不管你在dev分支上有多少次提交</p>
+<p><strong>使用 git merge -squash 压缩 Git 提交</strong></p>
+<p>以下是将分支与当前分支（通常是 main）合并并压缩源分支的提交的命令语法。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt" id="hl-29-1"><a class="lnlinks" href="#hl-29-1">1</a>
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-text" data-lang="text"><span class="line"><span class="cl">git merge --squash &lt;source_branch_name_to_squash&gt;
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>我们现在将合并功能分支即。feature1 与 main 分支一起压缩。</p>
+<p>首先，我们将切换到 master 分支。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt" id="hl-30-1"><a class="lnlinks" href="#hl-30-1">1</a>
+</span><span class="lnt" id="hl-30-2"><a class="lnlinks" href="#hl-30-2">2</a>
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-text" data-lang="text"><span class="line"><span class="cl">$ git checkout main
+</span></span><span class="line"><span class="cl">Switched to branch &#39;main&#39;
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>然后，我们将使用 squash 选项执行 git merge，如下所示。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt" id="hl-31-1"><a class="lnlinks" href="#hl-31-1">1</a>
+</span><span class="lnt" id="hl-31-2"><a class="lnlinks" href="#hl-31-2">2</a>
+</span><span class="lnt" id="hl-31-3"><a class="lnlinks" href="#hl-31-3">3</a>
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-text" data-lang="text"><span class="line"><span class="cl">$ git merge --squash feature1
+</span></span><span class="line"><span class="cl">Squash commit -- not updating HEAD
+</span></span><span class="line"><span class="cl">Automatic merge went well; stopped before committing as requested
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>当我们使用 &ndash;squash 选项执行 merge 时，Git 不会像在正常合并中那样在目标分支中创建合并提交。相反，Git 接受源分支中的所有更改。feature1 并将其作为本地更改放入目标分支即 master 的工作副本中。</p>
+<p>请参阅下文。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt" id="hl-32-1"><a class="lnlinks" href="#hl-32-1">1</a>
+</span><span class="lnt" id="hl-32-2"><a class="lnlinks" href="#hl-32-2">2</a>
+</span><span class="lnt" id="hl-32-3"><a class="lnlinks" href="#hl-32-3">3</a>
+</span><span class="lnt" id="hl-32-4"><a class="lnlinks" href="#hl-32-4">4</a>
+</span><span class="lnt" id="hl-32-5"><a class="lnlinks" href="#hl-32-5">5</a>
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-text" data-lang="text"><span class="line"><span class="cl">$ git status
+</span></span><span class="line"><span class="cl">On branch main
+</span></span><span class="line"><span class="cl">Changes to be committed:
+</span></span><span class="line"><span class="cl">  (use &#34;git restore --staged &lt;file&gt;...&#34; to unstage)
+</span></span><span class="line"><span class="cl">	modified:   config.ini
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>在这里，文件 config.ini 在 feature1 分支中进行了更改。</p>
+<p>现在，剩下的就是将更改提交到 main 分支，如下所示。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt" id="hl-33-1"><a class="lnlinks" href="#hl-33-1">1</a>
+</span><span class="lnt" id="hl-33-2"><a class="lnlinks" href="#hl-33-2">2</a>
+</span><span class="lnt" id="hl-33-3"><a class="lnlinks" href="#hl-33-3">3</a>
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-text" data-lang="text"><span class="line"><span class="cl">$ git commit -am &#39;Merged and squashed the feature1 branch changes&#39;
+</span></span><span class="line"><span class="cl">[main 573b923] Squashed and merged the feature1 branch
+</span></span><span class="line"><span class="cl"> 1 file changed, 4 insertions(+)
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>因此，我们现在已将 feature1 分支中的更改合并到 main 分支，同时压缩了 feature1 分支的提交消息。我们现在在 main 分支中只有一条提交消息。</p>
+<h2 id="starch">starch</h2>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt" id="hl-34-1"><a class="lnlinks" href="#hl-34-1">1</a>
+</span><span class="lnt" id="hl-34-2"><a class="lnlinks" href="#hl-34-2">2</a>
+</span><span class="lnt" id="hl-34-3"><a class="lnlinks" href="#hl-34-3">3</a>
 </span></code></pre></td>
 <td class="lntd">
 <pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="line"><span class="cl">git stash
@@ -726,13 +921,12 @@
 </div><p>git stash pop 命令会在 stash 应用之后丢弃（默认情况下指的是最顶部的）stash，而 git stash apply 会将其保留在存储列表中，以备日后重用（或者您可以在之后使用 git stash drop 命令移除此 stash）。</p>
 <p>除非 git stash pop 之后存在冲突，在这种情况下，它将不会删除该 stash，而使其行为与git stash apply 的命令完全相同。</p>
 <p>我们也可以使用另一种方式来实现 git stash pop，那就是：git stash apply &amp;&amp; git stash drop。</p>
-<p><strong>拓展知识点</strong></p>
 <p>到这我们基本实现了上述需求，但还需要知道一些基本的 git stash 知识，方便我们更清楚的操作。</p>
 <p>下列命令可以查看缓存的列表：</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre tabindex="0" class="chroma"><code><span class="lnt" id="hl-27-1"><a class="lnlinks" href="#hl-27-1">1</a>
-</span><span class="lnt" id="hl-27-2"><a class="lnlinks" href="#hl-27-2">2</a>
+<pre tabindex="0" class="chroma"><code><span class="lnt" id="hl-35-1"><a class="lnlinks" href="#hl-35-1">1</a>
+</span><span class="lnt" id="hl-35-2"><a class="lnlinks" href="#hl-35-2">2</a>
 </span></code></pre></td>
 <td class="lntd">
 <pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">git stash list
@@ -742,7 +936,7 @@
 </div><p>有时我们会发现因冲突导致 git stash pop 命令并没有消除 list 的记录，这样对我们操作造成一些干扰，这时我我们可以执行以下操作，清除记录：</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre tabindex="0" class="chroma"><code><span class="lnt" id="hl-28-1"><a class="lnlinks" href="#hl-28-1">1</a>
+<pre tabindex="0" class="chroma"><code><span class="lnt" id="hl-36-1"><a class="lnlinks" href="#hl-36-1">1</a>
 </span></code></pre></td>
 <td class="lntd">
 <pre tabindex="0" class="chroma"><code class="language-sql" data-lang="sql"><span class="line"><span class="cl"><span class="n">git</span><span class="w"> </span><span class="n">stash</span><span class="w"> </span><span class="k">drop</span><span class="w">
@@ -751,7 +945,7 @@
 </div><p>我们还可以对缓存的代码进行标识，方便查看：</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre tabindex="0" class="chroma"><code><span class="lnt" id="hl-29-1"><a class="lnlinks" href="#hl-29-1">1</a>
+<pre tabindex="0" class="chroma"><code><span class="lnt" id="hl-37-1"><a class="lnlinks" href="#hl-37-1">1</a>
 </span></code></pre></td>
 <td class="lntd">
 <pre tabindex="0" class="chroma"><code class="language-css" data-lang="css"><span class="line"><span class="cl"><span class="nt">git</span> <span class="nt">stash</span> <span class="nt">save</span> <span class="o">[</span><span class="nt">stashMessage</span><span class="o">]</span>
@@ -760,7 +954,7 @@
 </div><p>当缓存了很多条记录的时候，我们还可以一键清除：</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre tabindex="0" class="chroma"><code><span class="lnt" id="hl-30-1"><a class="lnlinks" href="#hl-30-1">1</a>
+<pre tabindex="0" class="chroma"><code><span class="lnt" id="hl-38-1"><a class="lnlinks" href="#hl-38-1">1</a>
 </span></code></pre></td>
 <td class="lntd">
 <pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="line"><span class="cl">git stash clear
@@ -770,14 +964,14 @@
 <p><code>git cherry-pick</code>命令的作用，就是将指定的提交（commit）应用于其他分支。</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre tabindex="0" class="chroma"><code><span class="lnt" id="hl-31-1"><a class="lnlinks" href="#hl-31-1">1</a>
-</span><span class="lnt" id="hl-31-2"><a class="lnlinks" href="#hl-31-2">2</a>
-</span><span class="lnt" id="hl-31-3"><a class="lnlinks" href="#hl-31-3">3</a>
-</span><span class="lnt" id="hl-31-4"><a class="lnlinks" href="#hl-31-4">4</a>
-</span><span class="lnt" id="hl-31-5"><a class="lnlinks" href="#hl-31-5">5</a>
-</span><span class="lnt" id="hl-31-6"><a class="lnlinks" href="#hl-31-6">6</a>
-</span><span class="lnt" id="hl-31-7"><a class="lnlinks" href="#hl-31-7">7</a>
-</span><span class="lnt" id="hl-31-8"><a class="lnlinks" href="#hl-31-8">8</a>
+<pre tabindex="0" class="chroma"><code><span class="lnt" id="hl-39-1"><a class="lnlinks" href="#hl-39-1">1</a>
+</span><span class="lnt" id="hl-39-2"><a class="lnlinks" href="#hl-39-2">2</a>
+</span><span class="lnt" id="hl-39-3"><a class="lnlinks" href="#hl-39-3">3</a>
+</span><span class="lnt" id="hl-39-4"><a class="lnlinks" href="#hl-39-4">4</a>
+</span><span class="lnt" id="hl-39-5"><a class="lnlinks" href="#hl-39-5">5</a>
+</span><span class="lnt" id="hl-39-6"><a class="lnlinks" href="#hl-39-6">6</a>
+</span><span class="lnt" id="hl-39-7"><a class="lnlinks" href="#hl-39-7">7</a>
+</span><span class="lnt" id="hl-39-8"><a class="lnlinks" href="#hl-39-8">8</a>
 </span></code></pre></td>
 <td class="lntd">
 <pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="line"><span class="cl"><span class="c1">#某提交应用于当前分支</span>
@@ -796,7 +990,7 @@
 <blockquote>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre tabindex="0" class="chroma"><code><span class="lnt" id="hl-32-1"><a class="lnlinks" href="#hl-32-1">1</a>
+<pre tabindex="0" class="chroma"><code><span class="lnt" id="hl-40-1"><a class="lnlinks" href="#hl-40-1">1</a>
 </span></code></pre></td>
 <td class="lntd">
 <pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">$ git cherry-pick --continue
@@ -808,9 +1002,164 @@
 <p><strong>（3）<code>--quit</code></strong></p>
 <p>发生代码冲突后，退出 Cherry pick，但是不回到操作前的样子。</p>
 <h2 id="worktree">worktree</h2>
-<p>待续</p>
-<h2 id="子模块">子模块</h2>
-<p>待续</p>
+<p>比 starch命令更强大</p>
+<blockquote>
+<p><strong>仅需维护一个 repo，又可以同时在多个 branch 上工作，互不影响</strong></p>
+</blockquote>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt" id="hl-41-1"><a class="lnlinks" href="#hl-41-1">1</a>
+</span><span class="lnt" id="hl-41-2"><a class="lnlinks" href="#hl-41-2">2</a>
+</span><span class="lnt" id="hl-41-3"><a class="lnlinks" href="#hl-41-3">3</a>
+</span><span class="lnt" id="hl-41-4"><a class="lnlinks" href="#hl-41-4">4</a>
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="line"><span class="cl">git worktree add <span class="o">[</span>-f<span class="o">]</span> <span class="o">[</span>--detach<span class="o">]</span> <span class="o">[</span>--checkout<span class="o">]</span> <span class="o">[</span>--lock<span class="o">]</span> <span class="o">[</span>-b &lt;new-branch&gt;<span class="o">]</span> &lt;path&gt; <span class="o">[</span>&lt;commit-ish&gt;<span class="o">]</span>
+</span></span><span class="line"><span class="cl">git worktree list <span class="o">[</span>--porcelain<span class="o">]</span>
+</span></span><span class="line"><span class="cl">git worktree remove <span class="o">[</span>-f<span class="o">]</span> &lt;worktree&gt;
+</span></span><span class="line"><span class="cl">git worktree prune <span class="o">[</span>-n<span class="o">]</span> <span class="o">[</span>-v<span class="o">]</span> <span class="o">[</span>--expire &lt;expire&gt;<span class="o">]</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>在展开说明之前，需要和大家普及两个你可能忽视的 Git 知识点：</p>
+<ol>
+<li>
+<p>默认情况下， <code>git init</code> 或 <code>git clone</code> 初始化的 repo，只有一个 <code>worktree</code>，叫做 <code>main worktree</code></p>
+</li>
+<li>
+<p>在某一个目录下使用 Git 命令，当前目录下要么有 <code>.git</code> 目录；</p>
+<p>要么有 <code>.git</code> 文件，而 <code>.git</code> 文件，里面的内容必须是指向 <code>.git</code> 文件夹的，可以理解为一个 link</p>
+</li>
+</ol>
+<p><strong>git worktree add</strong></p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt" id="hl-42-1"><a class="lnlinks" href="#hl-42-1">1</a>
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="line"><span class="cl">git worktree add ../worktrees/<span class="o">[</span>分支名<span class="o">]</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>在当前项目目录的父目录新建文件夹 worktrees，创建[分支名]项目</p>
+<p><code>cd /worktrees/[分支名]</code> 会发现，这个分支下并不存在 <code>.git</code> 文件夹，却存在一个 <code>.git</code> 文件，打开文件，内容如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt" id="hl-43-1"><a class="lnlinks" href="#hl-43-1">1</a>
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-ini" data-lang="ini"><span class="line"><span class="cl"><span class="na">gitdir: /Users/../test/.git/worktrees/[分支名]</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><blockquote>
+<p><strong>接下来，你就可以在 feature2 分支上做一切你想做的内容了(add/commit/pull/push)，和 main worktree 互不干扰</strong></p>
+</blockquote>
+<p>如果 [分支名]分支名称带 “/” 目录分割符，需要-b参数 指定分支名称，防止生成多余嵌套的目录</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt" id="hl-44-1"><a class="lnlinks" href="#hl-44-1">1</a>
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="line"><span class="cl">git worktree add -b <span class="s2">&#34;hotfix/JIRA234-fix-naming&#34;</span> ../hotfix/JIRA234-fix-naming
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p><strong>git worktree list</strong></p>
+<p>所有的worktree 都在共用一个 repo，所以在任意一个 worktree 目录下，都可以执行如下命令来查看 worktree 列表</p>
+<p>执行完命令后，可以查看到我们上面创建的所有 worktree 信息, <code>main worktree</code> 也会显示在此处</p>
+<p>worktree 的工作做完了，也是要及时删除的，否则也会浪费很多磁盘空间</p>
+<p><strong>git worktree remove</strong></p>
+<p>这个命令很简单了，worktree 的名字叫什么，直接就 remove 什么就好了</p>
+<p>假设你创建一个 worktree，并在里面有改动，突然间这个worktree 又不需要了，此刻你按照上述命令是不能删掉了，此时就需要 <code>-f</code> 参数来帮忙了</p>
+<p>删除了 worktree，其实在 Git 的文件中，还有很多 administrative 文件是没有用的，为了保持清洁，我们还需要进一步清理</p>
+<p><strong>git worktree prune</strong></p>
+<p>这个命令就是清洁的兜底操作，可以让我们的工作始终保持整洁</p>
+<h2 id="subtree-与-submodule">Subtree 与 Submodule</h2>
+<p>subtree 和 submodule 的目的都是用于 git 子仓库管理，二者的主要区别在于，subtree 属于拷贝子仓库，而 submodule 属于引用子仓库。</p>
+<p><strong>Subtree vs Submodule</strong></p>
+<table>
+<thead>
+<tr>
+<th>维度</th>
+<th>subtree</th>
+<th>submodule</th>
+<th>优劣对比</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>空间占用</td>
+<td>subtree 在初始化 add 时，会将子仓库 copy 到父仓库中，并产生至少一次 merge 记录。所以会占用大量父仓库空间</td>
+<td>submodule 在初始化 add 时，会在父仓库新建一个 .gitmodules 文件，用于保存子仓库的 commit hash 引用。所以不会占用父仓库空间</td>
+<td>submodule 更优</td>
+</tr>
+<tr>
+<td>clone</td>
+<td>subtree add 至父仓库之后，后续的 clone 操作与单一仓库操作相同</td>
+<td>后续 clone 时 submodule 还需要 init/update 操作，且 submodule 子仓库有自己的分支</td>
+<td>subtree 更优</td>
+</tr>
+<tr>
+<td>update</td>
+<td>子仓库更新后，父仓库需要 subtree pull 操作，且命令行略长，需要指定 &ndash;prefix 参数。由于无法感知子仓库的存在，可能会产生 merge 冲突需要处理</td>
+<td>子仓库更新后，父仓库需要 submodule update 操作。父仓库只需变动子仓库 hash 引用，不会出现冲突</td>
+<td>submodule 更优</td>
+</tr>
+<tr>
+<td>commit</td>
+<td>父仓库直接提交父子仓库目录里的变动。若修改了子仓库的文件，则需要执行 subtree push</td>
+<td>父子仓库的变动需要单独分别提交。且注意先提交子仓库再提交父仓库</td>
+<td>subtree 更优</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Subtree 命令行简化</strong></p>
+<p>subtree 在操作时，命令行较长，可以使用 remote 配置简化，例如</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt" id="hl-45-1"><a class="lnlinks" href="#hl-45-1"> 1</a>
+</span><span class="lnt" id="hl-45-2"><a class="lnlinks" href="#hl-45-2"> 2</a>
+</span><span class="lnt" id="hl-45-3"><a class="lnlinks" href="#hl-45-3"> 3</a>
+</span><span class="lnt" id="hl-45-4"><a class="lnlinks" href="#hl-45-4"> 4</a>
+</span><span class="lnt" id="hl-45-5"><a class="lnlinks" href="#hl-45-5"> 5</a>
+</span><span class="lnt" id="hl-45-6"><a class="lnlinks" href="#hl-45-6"> 6</a>
+</span><span class="lnt" id="hl-45-7"><a class="lnlinks" href="#hl-45-7"> 7</a>
+</span><span class="lnt" id="hl-45-8"><a class="lnlinks" href="#hl-45-8"> 8</a>
+</span><span class="lnt" id="hl-45-9"><a class="lnlinks" href="#hl-45-9"> 9</a>
+</span><span class="lnt" id="hl-45-10"><a class="lnlinks" href="#hl-45-10">10</a>
+</span><span class="lnt" id="hl-45-11"><a class="lnlinks" href="#hl-45-11">11</a>
+</span><span class="lnt" id="hl-45-12"><a class="lnlinks" href="#hl-45-12">12</a>
+</span><span class="lnt" id="hl-45-13"><a class="lnlinks" href="#hl-45-13">13</a>
+</span><span class="lnt" id="hl-45-14"><a class="lnlinks" href="#hl-45-14">14</a>
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="line"><span class="cl"><span class="c1"># 以下为标准 subtree add 命令行示例</span>
+</span></span><span class="line"><span class="cl">git subtree add --prefix<span class="o">=</span>centos-config --squash git@github.com:kaiye/centos-config.git master
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># 可以简化为</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># 1. 先为远程子仓库配置一个别名，便于后续的 pull 与 push 操作，这里例子以 centos 为别名</span>
+</span></span><span class="line"><span class="cl">git remote add centos git@github.com:kaiye/centos-config.git <span class="c1"># gra centos ...</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># 2. 其中 --prefix= 简写为 -P，配置 --squash 表示不拉取子仓库的历史提交记录</span>
+</span></span><span class="line"><span class="cl">git subtree add -P centos-config --squash centos master
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># 后续更新子仓库可以使用</span>
+</span></span><span class="line"><span class="cl">git subtree pull -P centos-config centos master
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># 若发生 fatal: refusing to merge unrelated histories 报错，加上 --squash 参数即可</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p><strong>git submodule update 出错解决方案</strong></p>
+<p>假如在执行 git submodule update 时出现以下类似错误信息：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt" id="hl-46-1"><a class="lnlinks" href="#hl-46-1">1</a>
+</span><span class="lnt" id="hl-46-2"><a class="lnlinks" href="#hl-46-2">2</a>
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="line"><span class="cl">fatal: reference is not a tree: f869da471c5d8a185cd110bbe4842d6757b002f5
+</span></span><span class="line"><span class="cl">Unable to checkout <span class="s1">&#39;f869da471c5d8a185cd110bbe4842d6757b002f5&#39;</span> in submodule path <span class="s1">&#39;centos-config&#39;</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>发生错误的原因是，centos-config 子仓库在某电脑 A 的「本地」commit 了新的版本 「f869da471c5d8a185cd110bbe4842d6757b002f5」，且该次 commit 未 push origin。但其父级仓库中引用了该子仓库的版本号，且将引用记录 push origin，导致其他用户无法 update 。</p>
+<p>解决方案是，在电脑 A 上将子仓库 push origin 后，在其他客户机上执行 git submodule update 。或者使用 git reset，将子仓库的引用版本号还原成 origin 上存在的最新版本号。</p>
 ]]></content:encoded>
     </item>
     

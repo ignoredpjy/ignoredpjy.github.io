@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>spring on PJY&#39;s Blog</title>
+    <link>https://ignoredpjy.github.io/tags/spring/</link>
+    <description>Recent content in spring on PJY&#39;s Blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <copyright>Build by pjy</copyright>
+    <lastBuildDate>Mon, 27 Nov 2023 16:17:41 +0800</lastBuildDate><atom:link href="https://ignoredpjy.github.io/tags/spring/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>事务传播机制</title>
+      <link>https://ignoredpjy.github.io/posts/study/spring%E4%BA%8B%E5%8A%A1%E4%BC%A0%E6%92%AD/</link>
+      <pubDate>Mon, 27 Nov 2023 16:17:41 +0800</pubDate>
+      
+      <guid>https://ignoredpjy.github.io/posts/study/spring%E4%BA%8B%E5%8A%A1%E4%BC%A0%E6%92%AD/</guid>
+      <description>Spring中七种事务传播行为 事务传播行为类型 说明 PROPAGATION_REQUIRED 如果当前没有事务，就新建一个事务，如果已经存在一个事务中，加入到这个事务中。这是最常见的选择。 PROPAGATION_SUPPORTS 支持当前事务，如果当前没有事务，就以非事务方式执行。 PROPAGATION_MANDATORY 使用当前的事务，如果当前没有事务，就抛出异常。 PROPAGATION_REQUIRES_NEW 新建事务，如果当前存在事务，把当前事务挂起。 PROPAGATION_NOT_SUPPORTED 以非事务方式执行操作，如果当前存在事务，就把当前事务挂起。 PROPAGATION_NEVER 以非事务方式执行，如果当前存在事务，则抛出异常。 PROPAGATION_NESTED 如果当前存在事务，则在嵌套事务内执行。如果当前没有事务，则执行与PROPAGATION_REQUIRED类似的操作。 极端的传播 PROPAGATION_MANDATORY
+使用外围事务，没有就报错
+话说，这样的代码块为什么不直接写到外围方法里，干嘛新建子方法
+没错就是为了单纯多写一个方法（程序员的事你少管）
+PROPAGATION_NEVER
+该方法无法被事务方法调用，一调就报错。
+懒惰的传播 NOT_SUPPORTED
+管你有没有事务，我就是没有
+SUPPORTS
+你的就是我的，你没有我也没有
+如何触发回滚 该方法向外部抛出了一个异常 回滚是否向外传递 外围方法为 同一事务 ( REQUIRED )，回滚向外传递 外围方法没有try住异常，或者try住之后再次throw，回滚向外传递 （其实就是 外围方法自身触发回滚，本质不是传递） 外围方法是否为父事务(NESTED)，无屌关系 回滚是否向内传递 内部方法为 同一事务 ( REQUIRED )，回滚向内传递 内部方法为 父事务 (NESTED) ，回滚向内传递 REQUIRED （加入事务） 外围方法未开启事务
+Propagation.REQUIRED修饰的内部方法会新开启自己的事务，且开启的事务相互独立，互不干扰。
+外围方法开启事务
+Propagation.REQUIRED修饰的内部方法会加入到外围方法的事务中，所有Propagation.REQUIRED修饰的内部方法和外围方法均属于同一事务，只要一个方法回滚，整个事务均回滚。
+REQUIRES_NEW （新的事务） 外围方法未开启事务
+同 REQUIRED
+外围方法开启事务
+Propagation.REQUIRES_NEW修饰的内部方法依然会单独开启独立事务，且与外部方法事务也独立，内部方法之间、内部方法和外部方法事务均相互独立，互不干扰。
+NESTED （子事务） 外围方法未开启事务
+同 REQUIRED
+外围方法开启事务</description>
+      <content:encoded><![CDATA[<h2 id="spring中七种事务传播行为">Spring中七种事务传播行为</h2>
+<table>
+<thead>
+<tr>
+<th>事务传播行为类型</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>PROPAGATION_REQUIRED</td>
+<td>如果当前没有事务，就新建一个事务，如果已经存在一个事务中，加入到这个事务中。这是最常见的选择。</td>
+</tr>
+<tr>
+<td>PROPAGATION_SUPPORTS</td>
+<td>支持当前事务，如果当前没有事务，就以非事务方式执行。</td>
+</tr>
+<tr>
+<td>PROPAGATION_MANDATORY</td>
+<td>使用当前的事务，如果当前没有事务，就抛出异常。</td>
+</tr>
+<tr>
+<td>PROPAGATION_REQUIRES_NEW</td>
+<td>新建事务，如果当前存在事务，把当前事务挂起。</td>
+</tr>
+<tr>
+<td>PROPAGATION_NOT_SUPPORTED</td>
+<td>以非事务方式执行操作，如果当前存在事务，就把当前事务挂起。</td>
+</tr>
+<tr>
+<td>PROPAGATION_NEVER</td>
+<td>以非事务方式执行，如果当前存在事务，则抛出异常。</td>
+</tr>
+<tr>
+<td>PROPAGATION_NESTED</td>
+<td>如果当前存在事务，则在嵌套事务内执行。如果当前没有事务，则执行与PROPAGATION_REQUIRED类似的操作。</td>
+</tr>
+</tbody>
+</table>
+<h2 id="极端的传播">极端的传播</h2>
+<ul>
+<li>
+<p><strong>PROPAGATION_MANDATORY</strong></p>
+<p>使用外围事务，没有就报错</p>
+<blockquote>
+<p>话说，这样的代码块为什么不直接写到外围方法里，干嘛新建子方法</p>
+</blockquote>
+<p>没错就是为了单纯多写一个方法（程序员的事你少管）</p>
+</li>
+<li>
+<p><strong>PROPAGATION_NEVER</strong></p>
+<p>该方法无法被事务方法调用，一调就报错。</p>
+</li>
+</ul>
+<h2 id="懒惰的传播">懒惰的传播</h2>
+<ul>
+<li>
+<p><strong>NOT_SUPPORTED</strong></p>
+<blockquote>
+<p>管你有没有事务，我就是没有</p>
+</blockquote>
+</li>
+<li>
+<p><strong>SUPPORTS</strong></p>
+<blockquote>
+<p>你的就是我的，你没有我也没有</p>
+</blockquote>
+</li>
+</ul>
+<h2 id="如何触发回滚">如何触发回滚</h2>
+<ul>
+<li><strong>该方法向外部抛出了一个异常</strong></li>
+</ul>
+<h2 id="回滚是否向外传递">回滚是否向外传递</h2>
+<ul>
+<li><strong>外围方法为 <code>同一事务</code> ( REQUIRED )，回滚向外传递</strong></li>
+<li><strong>外围方法没有<code>try</code>住异常，或者try住之后再次<code>throw</code>，回滚向外传递</strong> <strong>（其实就是 外围方法自身触发回滚，本质不是传递）</strong></li>
+<li><strong>外围方法是否为<code>父事务</code>(NESTED)，无屌关系</strong></li>
+</ul>
+<h2 id="回滚是否向内传递">回滚是否向内传递</h2>
+<ul>
+<li><strong>内部方法为 <code>同一事务</code> ( REQUIRED )，回滚向内传递</strong></li>
+<li><strong>内部方法为 <code>父事务</code> (NESTED) ，回滚向内传递</strong></li>
+</ul>
+<h2 id="required--加入事务">REQUIRED  （加入事务）</h2>
+<ul>
+<li>
+<p><strong>外围方法未开启事务</strong></p>
+<p><strong><code>Propagation.REQUIRED</code>修饰的内部方法会新开启自己的事务，且开启的事务相互独立，互不干扰。</strong></p>
+</li>
+<li>
+<p><strong>外围方法开启事务</strong></p>
+<p><strong><code>Propagation.REQUIRED</code>修饰的内部方法会加入到外围方法的事务中，所有<code>Propagation.REQUIRED</code>修饰的内部方法和外围方法均属于同一事务，只要一个方法回滚，整个事务均回滚。</strong></p>
+</li>
+</ul>
+<h2 id="requires_new--新的事务">REQUIRES_NEW  （新的事务）</h2>
+<ul>
+<li>
+<p><strong>外围方法未开启事务</strong></p>
+<p><strong>同 REQUIRED</strong></p>
+</li>
+<li>
+<p><strong>外围方法开启事务</strong></p>
+<p><strong><code>Propagation.REQUIRES_NEW</code>修饰的内部方法依然会单独开启独立事务，且与外部方法事务也独立，内部方法之间、内部方法和外部方法事务均相互独立，互不干扰。</strong></p>
+</li>
+</ul>
+<h2 id="nested--子事务">NESTED  （子事务）</h2>
+<ul>
+<li>
+<p><strong>外围方法未开启事务</strong></p>
+<p><strong>同 REQUIRED</strong></p>
+</li>
+<li>
+<p><strong>外围方法开启事务</strong></p>
+<p><strong><code>Propagation.NESTED</code>修饰的内部方法属于外部事务的子事务，外围主事务回滚，子事务一定回滚，而内部子事务可以单独回滚而不影响外围主事务和其他子事务</strong></p>
+</li>
+</ul>
+<p><a href="https://segmentfault.com/a/1190000013341344#item-3-3">代码试验</a></p>
+]]></content:encoded>
+    </item>
+    
+  </channel>
+</rss>

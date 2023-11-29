@@ -6,14 +6,711 @@
     <description>Recent content on PJY&#39;s Blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <copyright>Build by pjy</copyright>
-    <lastBuildDate>Wed, 23 Jun 2021 22:17:36 +0800</lastBuildDate><atom:link href="https://ignoredpjy.github.io/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Mon, 27 Nov 2023 16:17:41 +0800</lastBuildDate><atom:link href="https://ignoredpjy.github.io/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>mysql原理</title>
+      <link>https://ignoredpjy.github.io/posts/study/mysql%E5%8E%9F%E7%90%86/</link>
+      <pubDate>Mon, 27 Nov 2023 16:17:41 +0800</pubDate>
+      
+      <guid>https://ignoredpjy.github.io/posts/study/mysql%E5%8E%9F%E7%90%86/</guid>
+      <description>索引（B+树） 提到mysql索引，就不会不提：B+ 树 、B-树 和 红黑树
+InnoDB 是最常用的存储引擎，B+树是InnoDB默认的索引机制。
+B+树 VS B-树 VS 红黑树 磁盘知识 分页：
+现代操作系统都使用虚拟内存来印射到物理内存，内存大小有限且价格昂贵，所以数据的持久化是在磁盘上。虚拟内存、物理内存、磁盘都使用页作为内存读取的最小单位。一般一页为4KB（8个扇区，每个扇区512B，8*512B=4KB）
+局部性原理：
+时间局部性：一个被引用过一次的内存位置很可能在不远的将来再次被多次引用。 空间局部性：当一个数据被用到时，其附近的数据也通常会马上被使用。程序运行期间所需要的数据通常比较集中。 顺序局部性（Order Locality）：在典型程序中，除转移类指令外，大部分指令是顺序进行的。顺序执行和非顺序执行的比例大致是5:1。此外，对大型数组访问也是顺序的。 磁盘IO速度 &amp;amp; 预读
+速度：CPU &amp;raquo; Cache &amp;raquo;&amp;gt; 主内存 &amp;raquo;&amp;raquo; 磁盘， 磁盘读取的速度远小于内存，所以尽量减少 I/O 次数是提高效率的关键。
+考虑到磁盘IO是非常高昂的操作，计算机操作系统做了一些优化，IO时，不光把当前磁盘地址的数据，而是把相邻的数据也都读取到内存缓冲区内，因为局部性原理。而且即使只需要读取一个字节，磁盘也会读取一页的数据。
+查找树知识 二叉平衡树/二叉查找树
+平衡树是为了防止二叉查找树退化为链表，而红黑树在维持平衡以确保 O(log2(n)) 的同时，不需要频繁着调整树的结构；
+AVL树是最先发明的自平衡二叉查找树，AVL树中任何节点的两个子树的高度最大差别为1，所以它也被称为高度平衡树。通过旋转来实现自平衡 2-3 树，要求严格的平衡，通过允许3节点，减少自平衡次数 红黑树，不要求严格平衡，减少自平衡次数 b+/b-树
+B树/B-树：所有节点存储数据和指针(索引)；
+B+树
+非叶子节点存储指针 (索引)，叶子节点存储数据； 每个叶子节点有一个指针指向下一个节点，构成一个有序链表 为什么不使用二叉树/红黑树，使用B+树 单拎出来一点，就已经足够否决的了
+**为磁盘而生：**二叉树无法使用磁盘预读功能 , B树专门为磁盘读取而设计，B树的节点大小与磁盘页大小相匹配（InnoDB中页的大小 默认为 16 KB。） **更少的 IO 次数：**树的深度也会影响查询的效率，随着数据量增加，二叉树深度增长飞快，会造成查询时磁盘IO频繁读写，（B+树高度通常不超过3+1） **额外的平衡开销：**二叉树一次插入+平衡的过程，会涉及大量的磁盘I/O操作 更适于范围查询：二叉树存储在磁盘中，范围查询的效率极低，基本不支持范围查询 为什么不使用B-树，使用B+树 B+树非叶子节点仅存储索引不存储data，这样一个节点就可以存储更多的索引，可以使得B+树相对B树来说更矮（IO次数就是树的高度），所以I/O 次数更少
+B+树所有叶子节点构成一个 有序链表，按主键排序来遍历全部记录，能更好支持范围查找和区间查找。而B树每个节点都可能查找到数据，相邻的元素可能在不同节点上，在内存中不相邻，所以范围查找时需要在叶子节点和子节点不停的往返移动，效率较低且不稳定
+文件系统使用B-树，mongoDB使用B-树：
+MongoDB 是一种 nosql，也存储在磁盘上，被设计用在 数据模型简单，性能要求高的场合。性能要求高，看看B/B+树的区别第一点：</description>
+      <content:encoded><![CDATA[<h1 id="索引b树">索引（B+树）</h1>
+<p>提到mysql索引，就不会不提：B+ 树 、B-树 和 红黑树</p>
+<p>InnoDB 是最常用的存储引擎，B+树是InnoDB默认的索引机制。</p>
+<h2 id="b树-vs-b-树-vs-红黑树">B+树 VS B-树 VS 红黑树</h2>
+<h3 id="磁盘知识">磁盘知识</h3>
+<ul>
+<li>
+<p><strong>分页：</strong></p>
+<p>现代操作系统都使用虚拟内存来印射到物理内存，内存大小有限且价格昂贵，所以数据的持久化是在磁盘上。虚拟内存、物理内存、磁盘都使用页作为内存读取的最小单位。一般一页为<strong>4KB</strong>（8个扇区，每个扇区512B，8*512B=4KB）</p>
+</li>
+<li>
+<p><strong>局部性原理：</strong></p>
+<ul>
+<li>时间局部性：一个被引用过一次的内存位置很可能在不远的将来再次被多次引用。</li>
+<li>空间局部性：当一个数据被用到时，其附近的数据也通常会马上被使用。程序运行期间所需要的数据通常比较集中。</li>
+<li>顺序局部性（Order Locality）：在典型程序中，除转移类指令外，大部分指令是顺序进行的。顺序执行和非顺序执行的比例大致是5:1。此外，对大型数组访问也是顺序的。</li>
+</ul>
+</li>
+<li>
+<p><strong>磁盘IO速度 &amp; 预读</strong></p>
+<p>速度：CPU &raquo; Cache &raquo;&gt; 主内存 &raquo;&raquo; 磁盘，
+磁盘读取的速度远小于内存，所以尽量减少 I/O 次数是提高效率的关键。</p>
+<p>考虑到磁盘IO是非常高昂的操作，计算机操作系统做了一些优化，IO时，不光把当前磁盘地址的数据，而是把相邻的数据也都读取到内存缓冲区内，因为局部性原理。而且即使只需要读取一个字节，磁盘也会读取一页的数据。</p>
+</li>
+</ul>
+<h3 id="查找树知识">查找树知识</h3>
+<ul>
+<li>
+<p>二叉平衡树/二叉查找树</p>
+<blockquote>
+<p>平衡树是为了防止二叉查找树退化为链表，而红黑树在维持平衡以确保 O(log2(n)) 的同时，不需要频繁着调整树的结构；</p>
+</blockquote>
+<ul>
+<li>AVL树是<strong>最先发明的自平衡二叉查找树</strong>，AVL树中任何节点的两个子树的高度最大差别为1，所以它也被称为高度平衡树。<a href="https://infinityglow.github.io/study/algorithm/transform-and-conquer/AVL-tree/">通过旋转来实现自平衡</a></li>
+<li>2-3 树，要求严格的平衡，通过允许3节点，减少自平衡次数</li>
+<li>红黑树，不要求严格平衡，减少自平衡次数</li>
+</ul>
+</li>
+<li>
+<p>b+/b-树</p>
+<ul>
+<li>
+<p>B树/B-树：所有节点存储<strong>数据</strong>和<strong>指针(索引)</strong>；</p>
+</li>
+<li>
+<p>B+树</p>
+<ul>
+<li>非叶子节点存储<strong>指针 (索引)</strong>，叶子节点存储<strong>数据</strong>；</li>
+<li>每个叶子节点有一个指针指向下一个节点，构成一个有序链表</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="为什么不使用二叉树红黑树使用b树">为什么不使用二叉树/红黑树，使用B+树</h3>
+<blockquote>
+<p>单拎出来一点，就已经足够否决的了</p>
+</blockquote>
+<ul>
+<li>**为磁盘而生：**二叉树无法使用磁盘预读功能 , B树专门为磁盘读取而设计，B树的节点大小与磁盘页大小相匹配（InnoDB中页的大小 默认为 16 KB。）</li>
+<li>**更少的 IO 次数：**树的深度也会影响查询的效率，随着数据量增加，二叉树深度增长飞快，会造成查询时磁盘IO频繁读写，（B+树高度通常不超过3+1）</li>
+<li>**额外的平衡开销：**二叉树一次插入+平衡的过程，会涉及大量的磁盘I/O操作</li>
+<li><strong>更适于范围查询</strong>：二叉树存储在磁盘中，范围查询的效率极低，基本不支持范围查询</li>
+</ul>
+<h3 id="为什么不使用b-树使用b树">为什么不使用B-树，使用B+树</h3>
+<p>B+树非叶子节点仅存储索引不存储data，这样一个节点就可以存储更多的索引，可以使得B+树相对B树来说更矮（IO次数就是树的高度），所以<strong>I/O 次数更少</strong></p>
+<p>B+树所有叶子节点构成一个 <em>有序链表</em>，按主键排序来遍历全部记录，能更好支持<strong>范围查找</strong>和<strong>区间查找</strong>。而B树每个节点都可能查找到数据，相邻的元素可能在不同节点上，在内存中不相邻，所以范围查找时需要在叶子节点和子节点不停的往返移动，<strong>效率较低且不稳定</strong></p>
+<p><strong>文件系统使用B-树</strong>，<strong>mongoDB使用B-树</strong>：</p>
+<p>MongoDB 是一种 nosql，也存储在磁盘上，被设计用在 数据模型简单，性能要求高的场合。性能要求高，看看B/B+树的区别第一点：</p>
+<blockquote>
+<p>B+树内节点不存储数据，所有 data 存储在叶节点导致查询时间复杂度固定为 log n。而B-树查询时间复杂度不固定，与 key 在树中的位置有关，最好为O(1)</p>
+</blockquote>
+<p>我们说过，尽可能少的磁盘 IO 是提高性能的有效手段。MongoDB 是聚合型数据库，而 B-树恰好 key 和 data 域聚合在一起。</p>
+<h3 id="为什么不使用hashskiplist">为什么不使用Hash、SkipList</h3>
+<p>待续</p>
+<h2 id="页内查询">页内查询</h2>
+<p><strong>使用的是二分查找</strong></p>
+<p>InnoDB的页结构：表头槽数组+最小值+最大值：列链表</p>
+<p>通过最小最大是否跳过该页，通过二分确定索引所在的槽，每个槽最多8个列数据，直接遍历</p>
+<p>细节待续</p>
+<h2 id="页分裂">页分裂</h2>
+<ul>
+<li>InnoDB(聚簇索引)的主键值最好是有序的，不仅能充分使用到索引，还尽可能避免了页分裂；否则就必须进行页分裂来保证索引的逻辑正确性；</li>
+<li>InnoDB 的主键，尽量使用连续增长的值，而不是随机值(比如随机字符串或UUID), 否则可能产生大量的页分裂；</li>
+<li>InnoDB的B+树索引注意事项：根页面的位置万年不动，一个页面最少存储2条记录。</li>
+</ul>
+<p>原理待续</p>
+<h2 id="索引代价">索引代价</h2>
+<ul>
+<li>
+<p><strong>空间上的代价</strong></p>
+<p>这个是显而易见的，每建立一个索引都要为它建立一棵 B+ 树，每一棵 B+ 树的每一个节点都是一个数据页， 一个页默认会占用 16KB 的存储空间，一棵很大的 B+ 树由许多数据页组成，那可是很大的一片存储空间呢。</p>
+</li>
+<li>
+<p><strong>时间上的代价</strong></p>
+<p>每次对表中的数据进行增、删、改操作时，都需要去修改各个 B+ 树索引。而且我们讲过， B+ 树每层节点都 是按照索引列的值从小到大的顺序排序而组成了双向链表。不论是叶子节点中的记录，还是内节点中的记录 （也就是不论是用户记录还是目录项记录）都是按照索引列的值从小到大的顺序而形成了一个单向链表。而 增、删、改操作可能会对节点和记录的排序造成破坏，所以存储引擎需要额外的时间进行一些记录移位，页 面分裂、页面回收啥的操作来维护好节点和记录的排序。如果我们建了许多索引，每个索引对应的 B+ 树都 要进行相关的维护操作，这还能不给性能拖后腿么？</p>
+</li>
+<li>
+<p><strong>回表</strong></p>
+<p>最好在查询列表里只包含索引列，避免回表</p>
+<p>需要回表的记录越多，使用二级索引的性能就越低，甚至可能不如全表查询，由查询优化器选择。</p>
+</li>
+</ul>
+<h2 id="优化索引">优化索引</h2>
+<p><strong>explain各个字段代表的意思</strong></p>
+<ul>
+<li>
+<p>id ：select查询的序列号，包含一组数字，表示查询中执行select子句或操作表的顺序</p>
+</li>
+<li>
+<p>select_type ：查询类型 或者是 其他操作类型，单表简单、父子查询</p>
+<p>SIMPLE、UNION、PRIMARY、SUBQUERY、UNION RESULT</p>
+</li>
+<li>
+<p>table ：正在访问哪个表</p>
+</li>
+<li>
+<p>partitions ：匹配的分区</p>
+</li>
+<li>
+<p>type ：访问的类型</p>
+</li>
+<li>
+<p>possible_keys ：显示可能应用在这张表中的索引，一个或多个，但不一定实际使用到</p>
+</li>
+<li>
+<p>key ：实际使用到的索引，如果为NULL，则没有使用索引</p>
+</li>
+<li>
+<p>key_len ：表示索引中使用的字节数，可通过该列计算查询中使用的索引的长度</p>
+</li>
+<li>
+<p>ref ：显示索引的哪一列被使用了，如果可能的话，是一个常数，哪些列或常量被用于查找索引列上的值</p>
+</li>
+<li>
+<p>rows ：根据表统计信息及索引选用情况，大致估算出找到所需的记录所需读取的行数</p>
+</li>
+<li>
+<p>filtered ：查询的表行占表的百分比</p>
+</li>
+<li>
+<p>Extra ：包含不适合在其它列中显示但十分重要的额外信息</p>
+</li>
+</ul>
+<p><strong>type</strong></p>
+<p>NULL  &gt; system  &gt; const  &gt;  eq_ref &gt;  ref &gt;  ref_or_null &gt;  index_merge &gt;  range &gt;  index &gt;  ALL</p>
+<ul>
+<li>
+<p><code>NULL</code> MySQL能够在优化阶段分解查询语句，在执行阶段用不着再访问表或索引</p>
+</li>
+<li>
+<p><code>SYSTEM</code> 表只有一行记录（等于系统表），这是<code>const</code>类型的特列，平时不大会出现，可以忽略。</p>
+</li>
+<li>
+<p><code>const</code> 表示通过索引一次就找到了，<code>const</code>用于比较<code>primary key</code>或<code>uique</code>索引，因为只匹配一行数据，所以很快，如主键置于<code>where</code>列表中，MySQL就能将该查询转换为一个常量。</p>
+</li>
+<li>
+<p><code>eq_ref</code> 用于联表查询的情况，按联表的主键或唯一键联合查询。</p>
+<p>多表<code>join</code>时，对于来自前面表的每一行，在<strong>当前表中只能找到一行</strong>。这可能是除了<code>system</code>和<code>const</code>之外最好的类型。当主键或唯一非<code>NULL</code>索引的所有字段都被用作<code>join</code>联接时会使用此类型。</p>
+</li>
+<li>
+<p><code>ref</code> 可以用于单表扫描或者连接。如果是连接的话，驱动表的一条记录能够在被驱动表中通过非唯一（主键）属性所在索引中匹配多行数据，或者是在单表查询的时候通过非唯一（主键）属性所在索引中查到一行数据。</p>
+</li>
+<li>
+<p><code>ref_or_null</code> 类似ref，但是可以搜索值为<code>NULL</code>的行</p>
+</li>
+<li>
+<p><code>index_merge</code> 表示查询使用了两个以上的索引，最后取交集或者并集，常见<code>and </code>，<code>or</code>的条件使用了不同的索引，官方排序这个在<code>ref_or_null</code>之后，但是实际上由于要读取多个索引，性能可能大部分时间都不如<code>range</code>。</p>
+</li>
+<li>
+<p><code>range</code> 索引范围查询，常见于使用 =, &lt;&gt;, &gt;, &gt;=, &lt;, &lt;=, IS NULL, &lt;=&gt;, BETWEEN, IN()或者like等运算符的查询中。</p>
+</li>
+<li>
+<p><code>index</code> <code>index</code>只遍历索引树，通常比<code>All</code>快。因为，索引文件通常比数据文件小，也就是虽然<code>all</code>和<code>index</code>都是读全表，但<code>index</code>是从索引中读取的，而<code>all</code>是从硬盘读的。</p>
+</li>
+<li>
+<p><code>ALL</code> 如果一个查询的<code>type</code>是<code>All</code>,并且表的数据量很大，那么请解决它！！！</p>
+</li>
+</ul>
+<p><strong>Extra</strong></p>
+<ul>
+<li><code>Using filesort</code> 表示当SQL中有一个地方需要对一些数据进行排序的时候，优化器找不到能够使用的索引，所以只能使用外部的索引排序，外部排序就不断的在磁盘和内存中交换数据，这样就摆脱不了很多次磁盘IO，以至于SQL执行的效率很低。</li>
+<li><code>Using tempporary</code> 表示在对MySQL查询结果进行排序时，使用了临时表</li>
+<li><code>Using index</code> 表示使用了索引，很优秀。</li>
+<li><code>Using where</code> 使用了<code>where</code>但是好像没啥用。</li>
+<li><code>Using join buffer</code> 表明使用了连接缓存,比如说在查询的时候，多表<code>join</code>的次数非常多，那么将配置文件中的缓冲区的<code>join buffer</code>调大一些。</li>
+<li><code>impossible where</code> 筛选条件没能筛选出任何东西</li>
+<li><code>distinct</code> 优化<code>distinct</code>操作，在找到第一匹配的元组后即停止找同样值的动作</li>
+</ul>
+<p><strong>optimizer trace</strong></p>
+<p>待续</p>
+<h2 id="索引失效">索引失效</h2>
+<ul>
+<li>对索引使用函数、运算、类型转换</li>
+<li>like 没有使用左模糊匹配</li>
+<li>使用 不等于  !=、&lt;&gt;</li>
+<li>使用  index &lt; [] or index &gt; []</li>
+<li>使用 or ，且条件不全为索引</li>
+<li>使用 not in</li>
+<li>组合索引非最左匹配， 右边失效</li>
+<li>order by 使用外部排序</li>
+<li>查询结果集超过全表10%（默认值），使用全表扫描</li>
+</ul>
+<h1 id="索引其他">索引（其他）</h1>
+<p>待续</p>
+<h2 id="倒排索引全文索引">倒排索引（全文索引）</h2>
+<h2 id="自适应hash索引">自适应Hash索引</h2>
+<p><strong>hash索引</strong></p>
+<p>缺点：</p>
+<ul>
+<li>Hash索引仅能满足=, &lt;&gt;, IN查询，不能使用范围查询，</li>
+<li>同时因为数据的存储是没有顺序的，所以在ORDER BY的情况下，还需要对数据重新进行排序。</li>
+<li>使用联合索引时，Hash值是针对联合索引建合并后一起来计算Hash值，因此无法对单独的一个键或者几个索引键进行查询。</li>
+</ul>
+<p>优点：</p>
+<ul>
+<li>因为Hash索引结构的特点，导致它的检索数据效率非常高，通常只需要O(1)的复杂度，也就是一次就可以完成数据的检索。</li>
+</ul>
+<p>虽然Hash索引的使用场景有很多限制，但是优点也很明显，所以Innodb提供了一个<strong>自适当Hash索引</strong>的功能（Adaptive Hash index）。</p>
+<blockquote>
+<p>这里的自适应指的是不需要人工来制定，而是系统根据情况来自动完成的。</p>
+</blockquote>
+<p>那什么情况下才会使用自适应Hash索引呢？如果某个数据经常会访问到，当满足一定条件的时候，就会将这个数据页的地址存放到Hash表中。这样下次查询的时候，就可以直接找到这个页面的所在位置。需要说明的是：</p>
+<ul>
+<li>自适应哈希索引只保存热数据（经常被使用到的数据），并非全表数据。因此数据量并不会很大，可以让自适应Hash放到缓冲池中，也就是InnoDB buffer pool，进一步提升查找效率。</li>
+<li>InnoDB中的自适应Hash相当于是“索引的索引”，采用Hash索引存储的是B+树索引中的页面的地址。这也就是为什么可以称自适应Hash为索引的索引。 采用自适应Hash索引目的是可以根据SQL的查询条件加速定位到叶子节点，特别是当B+树比较深的时候，通过自适应Hash索引可以提高数据的检索效率。</li>
+<li>自适应Hash采用Hash函数映射到一个哈希表中，所以对于字典类型的数据查找非常方便 哈希表是数组+链表的形式。通过Hash函数可以计算索引键值所对应的bucket（桶）的位置，如果产生Hash冲突，如果产生哈希冲突，就需要遍历链表来解决。</li>
+<li>是否开启了自适应Hash，可以通过innodb_adaptive_hash_index变量来查看，比如：mysql&gt; show variables like &lsquo;%adaptive_hash_index&rsquo;;</li>
+</ul>
+<p>所以，总结下InnoDB本身不支持Hash，但是提供自适应Hash索引，不需要用户来操作，而是存储引擎自动完成的。自适应Hash也是InnoDB三大关键特性之一，另外两个分别是插入缓冲（<strong>Insert Buffer</strong>）和二次写(<strong>Double Write</strong>)。</p>
+<h2 id="空间索引">空间索引</h2>
+<h1 id="事务">事务</h1>
+<h2 id="锁">锁</h2>
+<h3 id="共享锁独占锁">共享锁&amp;独占锁</h3>
+<h3 id="表锁行锁意向锁">表锁、行锁、意向锁</h3>
+<h3 id="innodb中的行锁">InnoDB中的行锁</h3>
+<ul>
+<li>
+<p>记录锁（record lock）</p>
+</li>
+<li>
+<p>间隙锁（gap lock）</p>
+<p>gap lock是共享锁，可叠加——死锁因素</p>
+</li>
+<li>
+<p>next-key lock</p>
+</li>
+<li>
+<p>隐式锁（insert lock）</p>
+<p>本质为 gap锁</p>
+</li>
+<li>
+<p>AUTO-INC 锁</p>
+</li>
+</ul>
+<h3 id="死锁">死锁</h3>
+<h2 id="mvcc">MVCC</h2>
+<h3 id="版本链">版本链</h3>
+<h3 id="readview">ReadView</h3>
+<h3 id="可能的回表操作">可能的回表操作</h3>
+<p><a href="https://juejin.cn/post/6844904017068294152">https://juejin.cn/post/6844904017068294152</a></p>
+<p>待续</p>
+<h3 id="undo-log的删除时机">undo log的删除时机</h3>
+<h2 id="日志">日志</h2>
+<p>redo undo bin</p>
+<h1 id="mysql-server">mysql server</h1>
+<h2 id="连接管理">连接管理</h2>
+<h2 id="sql执行器">sql执行器</h2>
+<p>预处理器  ——》优化器 ——》执行器</p>
+<h2 id="查询优化">查询优化</h2>
+<h2 id="存储引擎">存储引擎</h2>
+<h1 id="innodb">InnoDB</h1>
+<h2 id="存储引擎对比">存储引擎对比</h2>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">引擎</th>
+<th style="text-align:center">描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">InnoDB</td>
+<td style="text-align:center">支持事务、行锁、外键等高级特性，主键聚簇。具有良好的性能和可靠性。MySQL默认的存储引擎。</td>
+</tr>
+<tr>
+<td style="text-align:center">MyISAM</td>
+<td style="text-align:center">由ISAM（Indexed Sequential Access Metod）引擎改良，可移植性好，占用空间小，但是表级别的锁使得并发读写性能较差，适用于只有查询或者读多写少的场景，如：服务配置存储等。</td>
+</tr>
+<tr>
+<td style="text-align:center">Memory</td>
+<td style="text-align:center">又被叫做：Heap，数据存储在内存中，可靠性较低，一般用于临时表场景使用。另外 InnoDB 也支持内存缓存可以大量甚至全部数据载入内存，所以这个引擎使用场景越来越少了。</td>
+</tr>
+<tr>
+<td style="text-align:center">CSV</td>
+<td style="text-align:center">数据通过 CSV(Comma-Separated Values)的格式存储，可读性和可操作性非常好，但是由于数据未经过索引，性能很差，所以一般用于将其他表中的数据导过来用于与其他应用交互。</td>
+</tr>
+<tr>
+<td style="text-align:center">Archive</td>
+<td style="text-align:center">支持压缩，无索引，适用于存储大量冷门归档数据。</td>
+</tr>
+<tr>
+<td style="text-align:center">Blackhole</td>
+<td style="text-align:center">黑洞，不存储数据，查询也都会返回空。但这也并不代表这个引擎没有实际价值，它虽然不存储数据但是 binlog 还是会有，所以经常用于做为伪从库减轻主库压力或者记录binlog用。</td>
+</tr>
+<tr>
+<td style="text-align:center">NDB</td>
+<td style="text-align:center">全称Network DataBase，是一个分布式存储引擎。</td>
+</tr>
+<tr>
+<td style="text-align:center">Merge</td>
+<td style="text-align:center">可以用于将一系列 MyISM 抽象为一张表。</td>
+</tr>
+<tr>
+<td style="text-align:center">Federated</td>
+<td style="text-align:center">可以将其他远程数据的表映射到本地。</td>
+</tr>
+<tr>
+<td style="text-align:center">Example</td>
+<td style="text-align:center">主要是一个 demo，供开发人员学习如何开发一个存储引擎。</td>
+</tr>
+</tbody>
+</table>
+<p>各引擎支持的功能特性对比：</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">Feature</th>
+<th style="text-align:center">MyISAM</th>
+<th style="text-align:center">Memory</th>
+<th style="text-align:center">InnoDB</th>
+<th style="text-align:center">Archive</th>
+<th style="text-align:center">NDB</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center"><strong>B树索引</strong></td>
+<td style="text-align:center">Yes</td>
+<td style="text-align:center">Yes</td>
+<td style="text-align:center">Yes</td>
+<td style="text-align:center">No</td>
+<td style="text-align:center">No</td>
+</tr>
+<tr>
+<td style="text-align:center"><strong>备份/恢复</strong></td>
+<td style="text-align:center">Yes</td>
+<td style="text-align:center">Yes</td>
+<td style="text-align:center">Yes</td>
+<td style="text-align:center">Yes</td>
+<td style="text-align:center">Yes</td>
+</tr>
+<tr>
+<td style="text-align:center"><strong>分布式集群支持</strong></td>
+<td style="text-align:center">No</td>
+<td style="text-align:center">No</td>
+<td style="text-align:center">No</td>
+<td style="text-align:center">No</td>
+<td style="text-align:center">Yes</td>
+</tr>
+<tr>
+<td style="text-align:center"><strong>聚簇索引</strong></td>
+<td style="text-align:center">No</td>
+<td style="text-align:center">No</td>
+<td style="text-align:center">Yes</td>
+<td style="text-align:center">No</td>
+<td style="text-align:center">No</td>
+</tr>
+<tr>
+<td style="text-align:center"><strong>数据压缩</strong></td>
+<td style="text-align:center">Yes</td>
+<td style="text-align:center">No</td>
+<td style="text-align:center">Yes</td>
+<td style="text-align:center">Yes</td>
+<td style="text-align:center">No</td>
+</tr>
+<tr>
+<td style="text-align:center"><strong>数据缓存</strong></td>
+<td style="text-align:center">No</td>
+<td style="text-align:center">N/A</td>
+<td style="text-align:center">Yes</td>
+<td style="text-align:center">No</td>
+<td style="text-align:center">Yes</td>
+</tr>
+<tr>
+<td style="text-align:center"><strong>数据加密</strong></td>
+<td style="text-align:center">Yes</td>
+<td style="text-align:center">Yes</td>
+<td style="text-align:center">Yes</td>
+<td style="text-align:center">Yes</td>
+<td style="text-align:center">Yes</td>
+</tr>
+<tr>
+<td style="text-align:center"><strong>外键</strong></td>
+<td style="text-align:center">No</td>
+<td style="text-align:center">No</td>
+<td style="text-align:center">Yes</td>
+<td style="text-align:center">No</td>
+<td style="text-align:center">Yes</td>
+</tr>
+<tr>
+<td style="text-align:center"><strong>全文搜索（倒排）</strong></td>
+<td style="text-align:center">Yes</td>
+<td style="text-align:center">No</td>
+<td style="text-align:center">Yes</td>
+<td style="text-align:center">No</td>
+<td style="text-align:center">No</td>
+</tr>
+<tr>
+<td style="text-align:center"><strong>地理空间数据</strong></td>
+<td style="text-align:center">Yes</td>
+<td style="text-align:center">No</td>
+<td style="text-align:center">Yes</td>
+<td style="text-align:center">Yes</td>
+<td style="text-align:center">Yes</td>
+</tr>
+<tr>
+<td style="text-align:center"><strong>地理空间索引</strong></td>
+<td style="text-align:center">Yes</td>
+<td style="text-align:center">No</td>
+<td style="text-align:center">Yes</td>
+<td style="text-align:center">No</td>
+<td style="text-align:center">No</td>
+</tr>
+<tr>
+<td style="text-align:center"><strong>散列索引</strong></td>
+<td style="text-align:center">No</td>
+<td style="text-align:center">Yes</td>
+<td style="text-align:center">No</td>
+<td style="text-align:center">No</td>
+<td style="text-align:center">Yes</td>
+</tr>
+<tr>
+<td style="text-align:center"><strong>索引缓存</strong></td>
+<td style="text-align:center">Yes</td>
+<td style="text-align:center">N/A</td>
+<td style="text-align:center">Yes</td>
+<td style="text-align:center">No</td>
+<td style="text-align:center">Yes</td>
+</tr>
+<tr>
+<td style="text-align:center"><strong>锁粒度</strong></td>
+<td style="text-align:center">Table</td>
+<td style="text-align:center">Table</td>
+<td style="text-align:center">Row</td>
+<td style="text-align:center">Row</td>
+<td style="text-align:center">Row</td>
+</tr>
+<tr>
+<td style="text-align:center"><strong>MVCC</strong></td>
+<td style="text-align:center">No</td>
+<td style="text-align:center">No</td>
+<td style="text-align:center">Yes</td>
+<td style="text-align:center">No</td>
+<td style="text-align:center">No</td>
+</tr>
+<tr>
+<td style="text-align:center"><strong>冗余存储</strong> (note 1)</td>
+<td style="text-align:center">Yes</td>
+<td style="text-align:center">Limited</td>
+<td style="text-align:center">Yes</td>
+<td style="text-align:center">Yes</td>
+<td style="text-align:center">Yes</td>
+</tr>
+<tr>
+<td style="text-align:center"><strong>存储限制</strong></td>
+<td style="text-align:center">256TB</td>
+<td style="text-align:center">RAM</td>
+<td style="text-align:center">64TB</td>
+<td style="text-align:center">None</td>
+<td style="text-align:center">384EB</td>
+</tr>
+<tr>
+<td style="text-align:center"><strong>T树索引</strong></td>
+<td style="text-align:center">No</td>
+<td style="text-align:center">No</td>
+<td style="text-align:center">No</td>
+<td style="text-align:center">No</td>
+<td style="text-align:center">Yes</td>
+</tr>
+<tr>
+<td style="text-align:center"><strong>事务</strong></td>
+<td style="text-align:center">No</td>
+<td style="text-align:center">No</td>
+<td style="text-align:center">Yes</td>
+<td style="text-align:center">No</td>
+<td style="text-align:center">Yes</td>
+</tr>
+<tr>
+<td style="text-align:center"><strong>更新数据字典的统计信息</strong></td>
+<td style="text-align:center">Yes</td>
+<td style="text-align:center">Yes</td>
+<td style="text-align:center">Yes</td>
+<td style="text-align:center">Yes</td>
+<td style="text-align:center">Yes</td>
+</tr>
+</tbody>
+</table>
+<p>注：关于存储限制虽然上限都很高，但是将数据都存储在一个文件的引擎会受操作系统的文件大小限制（TB级别）。</p>
+<p>mysql可以在创建表时，为表单独设置存储引擎</p>
+<p>Example，创建一个 MyISAM 的表：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt" id="hl-0-1"><a class="lnlinks" href="#hl-0-1">1</a>
+</span><span class="lnt" id="hl-0-2"><a class="lnlinks" href="#hl-0-2">2</a>
+</span><span class="lnt" id="hl-0-3"><a class="lnlinks" href="#hl-0-3">3</a>
+</span><span class="lnt" id="hl-0-4"><a class="lnlinks" href="#hl-0-4">4</a>
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-sql" data-lang="sql"><span class="line"><span class="cl"><span class="k">create</span><span class="w"> </span><span class="k">table</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="k">not</span><span class="w"> </span><span class="k">exists</span><span class="w"> </span><span class="n">people</span><span class="w"> </span><span class="p">(</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="n">id</span><span class="w"> </span><span class="nb">int</span><span class="w"> </span><span class="k">primary</span><span class="w"> </span><span class="k">key</span><span class="w"> </span><span class="n">auto_increment</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="n">name</span><span class="w"> </span><span class="nb">varchar</span><span class="p">(</span><span class="mi">40</span><span class="p">)</span><span class="w"> </span><span class="k">null</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="p">)</span><span class="w"> </span><span class="k">comment</span><span class="w"> </span><span class="s1">&#39;存储人物信息&#39;</span><span class="w"> </span><span class="n">engine</span><span class="o">=</span><span class="s1">&#39;myisam;
+</span></span></span></code></pre></td></tr></table>
+</div>
+</div><h2 id="buffer-pool">Buffer Pool</h2>
+<p>LRU-List、Free-List、Flush-List</p>
+<h2 id="三大特性">三大特性</h2>
+<p><strong>插入缓冲 Insert Buffer</strong></p>
+<p><strong>二次写 Double Write</strong></p>
+<p><strong>自适应哈希索引（adaptive hash index）</strong></p>
+<h2 id="heading"></h2>
+]]></content:encoded>
+    </item>
+    
+    <item>
+      <title>事务传播机制</title>
+      <link>https://ignoredpjy.github.io/posts/study/spring%E4%BA%8B%E5%8A%A1%E4%BC%A0%E6%92%AD/</link>
+      <pubDate>Mon, 27 Nov 2023 16:17:41 +0800</pubDate>
+      
+      <guid>https://ignoredpjy.github.io/posts/study/spring%E4%BA%8B%E5%8A%A1%E4%BC%A0%E6%92%AD/</guid>
+      <description>Spring中七种事务传播行为 事务传播行为类型 说明 PROPAGATION_REQUIRED 如果当前没有事务，就新建一个事务，如果已经存在一个事务中，加入到这个事务中。这是最常见的选择。 PROPAGATION_SUPPORTS 支持当前事务，如果当前没有事务，就以非事务方式执行。 PROPAGATION_MANDATORY 使用当前的事务，如果当前没有事务，就抛出异常。 PROPAGATION_REQUIRES_NEW 新建事务，如果当前存在事务，把当前事务挂起。 PROPAGATION_NOT_SUPPORTED 以非事务方式执行操作，如果当前存在事务，就把当前事务挂起。 PROPAGATION_NEVER 以非事务方式执行，如果当前存在事务，则抛出异常。 PROPAGATION_NESTED 如果当前存在事务，则在嵌套事务内执行。如果当前没有事务，则执行与PROPAGATION_REQUIRED类似的操作。 极端的传播 PROPAGATION_MANDATORY
+使用外围事务，没有就报错
+话说，这样的代码块为什么不直接写到外围方法里，干嘛新建子方法
+没错就是为了单纯多写一个方法（程序员的事你少管）
+PROPAGATION_NEVER
+该方法无法被事务方法调用，一调就报错。
+懒惰的传播 NOT_SUPPORTED
+管你有没有事务，我就是没有
+SUPPORTS
+你的就是我的，你没有我也没有
+如何触发回滚 该方法向外部抛出了一个异常 回滚是否向外传递 外围方法为 同一事务 ( REQUIRED )，回滚向外传递 外围方法没有try住异常，或者try住之后再次throw，回滚向外传递 （其实就是 外围方法自身触发回滚，本质不是传递） 外围方法是否为父事务(NESTED)，无屌关系 回滚是否向内传递 内部方法为 同一事务 ( REQUIRED )，回滚向内传递 内部方法为 父事务 (NESTED) ，回滚向内传递 REQUIRED （加入事务） 外围方法未开启事务
+Propagation.REQUIRED修饰的内部方法会新开启自己的事务，且开启的事务相互独立，互不干扰。
+外围方法开启事务
+Propagation.REQUIRED修饰的内部方法会加入到外围方法的事务中，所有Propagation.REQUIRED修饰的内部方法和外围方法均属于同一事务，只要一个方法回滚，整个事务均回滚。
+REQUIRES_NEW （新的事务） 外围方法未开启事务
+同 REQUIRED
+外围方法开启事务
+Propagation.REQUIRES_NEW修饰的内部方法依然会单独开启独立事务，且与外部方法事务也独立，内部方法之间、内部方法和外部方法事务均相互独立，互不干扰。
+NESTED （子事务） 外围方法未开启事务
+同 REQUIRED
+外围方法开启事务</description>
+      <content:encoded><![CDATA[<h2 id="spring中七种事务传播行为">Spring中七种事务传播行为</h2>
+<table>
+<thead>
+<tr>
+<th>事务传播行为类型</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>PROPAGATION_REQUIRED</td>
+<td>如果当前没有事务，就新建一个事务，如果已经存在一个事务中，加入到这个事务中。这是最常见的选择。</td>
+</tr>
+<tr>
+<td>PROPAGATION_SUPPORTS</td>
+<td>支持当前事务，如果当前没有事务，就以非事务方式执行。</td>
+</tr>
+<tr>
+<td>PROPAGATION_MANDATORY</td>
+<td>使用当前的事务，如果当前没有事务，就抛出异常。</td>
+</tr>
+<tr>
+<td>PROPAGATION_REQUIRES_NEW</td>
+<td>新建事务，如果当前存在事务，把当前事务挂起。</td>
+</tr>
+<tr>
+<td>PROPAGATION_NOT_SUPPORTED</td>
+<td>以非事务方式执行操作，如果当前存在事务，就把当前事务挂起。</td>
+</tr>
+<tr>
+<td>PROPAGATION_NEVER</td>
+<td>以非事务方式执行，如果当前存在事务，则抛出异常。</td>
+</tr>
+<tr>
+<td>PROPAGATION_NESTED</td>
+<td>如果当前存在事务，则在嵌套事务内执行。如果当前没有事务，则执行与PROPAGATION_REQUIRED类似的操作。</td>
+</tr>
+</tbody>
+</table>
+<h2 id="极端的传播">极端的传播</h2>
+<ul>
+<li>
+<p><strong>PROPAGATION_MANDATORY</strong></p>
+<p>使用外围事务，没有就报错</p>
+<blockquote>
+<p>话说，这样的代码块为什么不直接写到外围方法里，干嘛新建子方法</p>
+</blockquote>
+<p>没错就是为了单纯多写一个方法（程序员的事你少管）</p>
+</li>
+<li>
+<p><strong>PROPAGATION_NEVER</strong></p>
+<p>该方法无法被事务方法调用，一调就报错。</p>
+</li>
+</ul>
+<h2 id="懒惰的传播">懒惰的传播</h2>
+<ul>
+<li>
+<p><strong>NOT_SUPPORTED</strong></p>
+<blockquote>
+<p>管你有没有事务，我就是没有</p>
+</blockquote>
+</li>
+<li>
+<p><strong>SUPPORTS</strong></p>
+<blockquote>
+<p>你的就是我的，你没有我也没有</p>
+</blockquote>
+</li>
+</ul>
+<h2 id="如何触发回滚">如何触发回滚</h2>
+<ul>
+<li><strong>该方法向外部抛出了一个异常</strong></li>
+</ul>
+<h2 id="回滚是否向外传递">回滚是否向外传递</h2>
+<ul>
+<li><strong>外围方法为 <code>同一事务</code> ( REQUIRED )，回滚向外传递</strong></li>
+<li><strong>外围方法没有<code>try</code>住异常，或者try住之后再次<code>throw</code>，回滚向外传递</strong> <strong>（其实就是 外围方法自身触发回滚，本质不是传递）</strong></li>
+<li><strong>外围方法是否为<code>父事务</code>(NESTED)，无屌关系</strong></li>
+</ul>
+<h2 id="回滚是否向内传递">回滚是否向内传递</h2>
+<ul>
+<li><strong>内部方法为 <code>同一事务</code> ( REQUIRED )，回滚向内传递</strong></li>
+<li><strong>内部方法为 <code>父事务</code> (NESTED) ，回滚向内传递</strong></li>
+</ul>
+<h2 id="required--加入事务">REQUIRED  （加入事务）</h2>
+<ul>
+<li>
+<p><strong>外围方法未开启事务</strong></p>
+<p><strong><code>Propagation.REQUIRED</code>修饰的内部方法会新开启自己的事务，且开启的事务相互独立，互不干扰。</strong></p>
+</li>
+<li>
+<p><strong>外围方法开启事务</strong></p>
+<p><strong><code>Propagation.REQUIRED</code>修饰的内部方法会加入到外围方法的事务中，所有<code>Propagation.REQUIRED</code>修饰的内部方法和外围方法均属于同一事务，只要一个方法回滚，整个事务均回滚。</strong></p>
+</li>
+</ul>
+<h2 id="requires_new--新的事务">REQUIRES_NEW  （新的事务）</h2>
+<ul>
+<li>
+<p><strong>外围方法未开启事务</strong></p>
+<p><strong>同 REQUIRED</strong></p>
+</li>
+<li>
+<p><strong>外围方法开启事务</strong></p>
+<p><strong><code>Propagation.REQUIRES_NEW</code>修饰的内部方法依然会单独开启独立事务，且与外部方法事务也独立，内部方法之间、内部方法和外部方法事务均相互独立，互不干扰。</strong></p>
+</li>
+</ul>
+<h2 id="nested--子事务">NESTED  （子事务）</h2>
+<ul>
+<li>
+<p><strong>外围方法未开启事务</strong></p>
+<p><strong>同 REQUIRED</strong></p>
+</li>
+<li>
+<p><strong>外围方法开启事务</strong></p>
+<p><strong><code>Propagation.NESTED</code>修饰的内部方法属于外部事务的子事务，外围主事务回滚，子事务一定回滚，而内部子事务可以单独回滚而不影响外围主事务和其他子事务</strong></p>
+</li>
+</ul>
+<p><a href="https://segmentfault.com/a/1190000013341344#item-3-3">代码试验</a></p>
+]]></content:encoded>
+    </item>
+    
     <item>
       <title>Git指南</title>
       <link>https://ignoredpjy.github.io/posts/study/git%E6%8C%87%E5%8D%97/</link>
       <pubDate>Wed, 23 Jun 2021 22:17:36 +0800</pubDate>
       
       <guid>https://ignoredpjy.github.io/posts/study/git%E6%8C%87%E5%8D%97/</guid>
-      <description>使用git以来，有一些知识，不用就会含糊不清，稍作整理方便查阅，可能不适合所有人</description>
+      <description>使用git以来，有一些知识，不用就会记忆含糊不清，以自己理解的方式稍作整理，方便查阅</description>
       <content:encoded><![CDATA[<h2 id="使用git之前">使用git之前</h2>
 <p>git 的 配置文件有三个 分别是 system、global、local</p>
 <ul>
@@ -108,16 +805,62 @@
 </span></span></code></pre></td></tr></table>
 </div>
 </div><p><strong>.gitignore</strong></p>
-<p>基本每个仓库都含有的<strong>忽略文件</strong>，用来配置 git 忽略哪些文件</p>
-<p>常需要忽略一些 集成开发环境配置目录 和 代码打包目录</p>
+<p>基本每个仓库都含有的<strong>忽略配置</strong>，用来配置 git 忽略哪些目录和文件 ,（git config命令也能配置ignore，不过应该没人这么用）</p>
+<p>常需要忽略一些 集成开发环境配置目录 、 代码打包目录 、日志文件 ，避免多人开发时影响其他人，比如 java配置如下：</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre tabindex="0" class="chroma"><code></code></pre></td>
+<pre tabindex="0" class="chroma"><code><span class="lnt" id="hl-2-1"><a class="lnlinks" href="#hl-2-1"> 1</a>
+</span><span class="lnt" id="hl-2-2"><a class="lnlinks" href="#hl-2-2"> 2</a>
+</span><span class="lnt" id="hl-2-3"><a class="lnlinks" href="#hl-2-3"> 3</a>
+</span><span class="lnt" id="hl-2-4"><a class="lnlinks" href="#hl-2-4"> 4</a>
+</span><span class="lnt" id="hl-2-5"><a class="lnlinks" href="#hl-2-5"> 5</a>
+</span><span class="lnt" id="hl-2-6"><a class="lnlinks" href="#hl-2-6"> 6</a>
+</span><span class="lnt" id="hl-2-7"><a class="lnlinks" href="#hl-2-7"> 7</a>
+</span><span class="lnt" id="hl-2-8"><a class="lnlinks" href="#hl-2-8"> 8</a>
+</span><span class="lnt" id="hl-2-9"><a class="lnlinks" href="#hl-2-9"> 9</a>
+</span><span class="lnt" id="hl-2-10"><a class="lnlinks" href="#hl-2-10">10</a>
+</span><span class="lnt" id="hl-2-11"><a class="lnlinks" href="#hl-2-11">11</a>
+</span><span class="lnt" id="hl-2-12"><a class="lnlinks" href="#hl-2-12">12</a>
+</span><span class="lnt" id="hl-2-13"><a class="lnlinks" href="#hl-2-13">13</a>
+</span><span class="lnt" id="hl-2-14"><a class="lnlinks" href="#hl-2-14">14</a>
+</span><span class="lnt" id="hl-2-15"><a class="lnlinks" href="#hl-2-15">15</a>
+</span><span class="lnt" id="hl-2-16"><a class="lnlinks" href="#hl-2-16">16</a>
+</span><span class="lnt" id="hl-2-17"><a class="lnlinks" href="#hl-2-17">17</a>
+</span><span class="lnt" id="hl-2-18"><a class="lnlinks" href="#hl-2-18">18</a>
+</span><span class="lnt" id="hl-2-19"><a class="lnlinks" href="#hl-2-19">19</a>
+</span><span class="lnt" id="hl-2-20"><a class="lnlinks" href="#hl-2-20">20</a>
+</span><span class="lnt" id="hl-2-21"><a class="lnlinks" href="#hl-2-21">21</a>
+</span><span class="lnt" id="hl-2-22"><a class="lnlinks" href="#hl-2-22">22</a>
+</span><span class="lnt" id="hl-2-23"><a class="lnlinks" href="#hl-2-23">23</a>
+</span></code></pre></td>
 <td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"></code></pre></td></tr></table>
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">### MAVEN ###
+</span></span><span class="line"><span class="cl">target/
+</span></span><span class="line"><span class="cl">out/
+</span></span><span class="line"><span class="cl">*.class
+</span></span><span class="line"><span class="cl">*.jar
+</span></span><span class="line"><span class="cl">*.war
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">### IDE ###
+</span></span><span class="line"><span class="cl">.idea/
+</span></span><span class="line"><span class="cl">*.http
+</span></span><span class="line"><span class="cl">*.iws
+</span></span><span class="line"><span class="cl">*.iml
+</span></span><span class="line"><span class="cl">*.ipr
+</span></span><span class="line"><span class="cl">.vscode/
+</span></span><span class="line"><span class="cl">.classpath
+</span></span><span class="line"><span class="cl">.factorypath
+</span></span><span class="line"><span class="cl">.project
+</span></span><span class="line"><span class="cl">.settings
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">### LOG ###
+</span></span><span class="line"><span class="cl">*.log
+</span></span><span class="line"><span class="cl">*.txt
+</span></span><span class="line"><span class="cl">*.temp
+</span></span></code></pre></td></tr></table>
 </div>
 </div><h2 id="查看的命令">查看的命令</h2>
-<p>常用的一些查看详情的命令</p>
+<p>常用的一些查看详情的命令，当然使用IDE开发的话，这些命令基本用不到了。</p>
 <p>最常用</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
@@ -239,13 +982,9 @@
 </span><span class="lnt" id="hl-6-15"><a class="lnlinks" href="#hl-6-15">15</a>
 </span><span class="lnt" id="hl-6-16"><a class="lnlinks" href="#hl-6-16">16</a>
 </span><span class="lnt" id="hl-6-17"><a class="lnlinks" href="#hl-6-17">17</a>
-</span><span class="lnt" id="hl-6-18"><a class="lnlinks" href="#hl-6-18">18</a>
-</span><span class="lnt" id="hl-6-19"><a class="lnlinks" href="#hl-6-19">19</a>
 </span></code></pre></td>
 <td class="lntd">
-<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl"><span class="c1"># 显示所有提交过的用户，按提交次数排序</span>
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="line"><span class="cl"><span class="c1"># 显示所有提交过的用户，按提交次数排序</span>
 </span></span><span class="line"><span class="cl">$ git shortlog -sn
 </span></span><span class="line"><span class="cl">
 </span></span><span class="line"><span class="cl"><span class="c1"># 显示指定文件是什么人在什么时间修改过</span>
@@ -450,6 +1189,19 @@
 <p><strong>push 之前 的 commit 可以用 reset，已push的commit 一定用revert</strong></p>
 <p><strong>因为，本地操作失误的reset，可以用 reflog 抢救</strong></p>
 </blockquote>
+<h2 id="git-relogresore补救">git relog（resore补救）</h2>
+<p><strong>找回已删除的内容</strong></p>
+<p>虽说 Git 是一款强大的版本管理工具，一般来说，提交到代码库的内容不用担心丢失，然而某些特殊情况下仍免不了要做抢救找回，例如不恰当的 reset、错删分支等。这就是 <code>git reflog</code>派上用场的时候了。</p>
+<p>“git reflog”是恢复本地历史的强力工具，几乎可以恢复所有本地记录，例如被 reset 丢弃掉的 commit、被删掉的分支等，称得上代码找回的“最后一根救命稻草”。</p>
+<p>然而需要注意，<strong>并非真正所有记录”git reflog”都能够恢复</strong>，有些情况仍然无能为力：</p>
+<ol>
+<li><strong>非本地操作的记录</strong>
+“git reflog”能管理的是本地工作区操作记录，非本地（如其他人或在其他机器上）的记录它就无从知晓了。</li>
+<li><strong>未 commit 的内容</strong>
+例如只在工作区或暂存区被回滚的内容（git checkout – 文件 或 git reset HEAD 文件）。</li>
+<li><strong>太久远的内容</strong>
+“git reflog”保留的记录有一定时间限制（默认 90 天），超时的会被自动清理。另外如果主动执行清理命令也会提前清理掉。</li>
+</ol>
 <h2 id="提交操作">提交操作</h2>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
@@ -650,7 +1402,11 @@
 </span></span></code></pre></td></tr></table>
 </div>
 </div><p><strong>FETCH_HEAD</strong></p>
-<p>待续</p>
+<p>在 Git 中，<code>FETCH_HEAD</code> 是一个记录着上次 <code>git fetch</code> 命令所抓取下来的远程分支的快照的引用，也可以被看作是一个指向最新抓取下来的提交的指针。</p>
+<p>当你使用 <code>git fetch</code> 命令从远程仓库拉取最新的代码时，Git 会把最新的提交记录保存在本地的 <code>FETCH_HEAD</code> 引用中。此时，你可以使用 <code>git merge FETCH_HEAD</code> 命令将本地分支合并到 <code>FETCH_HEAD</code> 所指向的最新提交。</p>
+<p><strong>需要注意的是</strong>，<code>FETCH_HEAD</code> 引用只会在下一次执行 <code>git fetch</code> 命令时被更新。如果你希望在当前分支中使用最新的提交记录，你需要先执行 <code>git fetch</code> 命令来更新 <code>FETCH_HEAD</code>，然后再使用 <code>git merge FETCH_HEAD</code> 命令来合并最新的提交记录。</p>
+<p><strong>git prune</strong></p>
+<p>清理远程分支在本地的存档，与fetch操作相反，不常用，解决fetch报错</p>
 <h2 id="tag标签">tag标签</h2>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
@@ -710,12 +1466,148 @@
 </span></span><span class="line"><span class="cl">$ git checkout -b <span class="o">[</span>branch<span class="o">]</span> <span class="o">[</span>tag<span class="o">]</span>
 </span></span></code></pre></td></tr></table>
 </div>
-</div><h2 id="starch">starch</h2>
+</div><h2 id="squach">squach</h2>
+<p>在开发一个功能的时候会反复的提交代码，会造成一个功能有很多次提交，在我们要向master做分支合并的时候，就会出现很多commits，在合并以后同一个功能的commits就会很多，导致我们无法清晰的知道这个功能关联的commit有哪些，这个squash就是优化我们的commits信息，让我们的版本仓库看起来简洁明了，功能点一目了然。</p>
+<p>使用比较简单，比如我想将本地开发分支的内容合并到master主线分支上，并且期望将一个功能的所有提交压缩成一个commit；</p>
+<p>有两种方法可以实现 Git 压缩：</p>
+<ul>
+<li>git rebase -i 作为用于压缩提交的交互式工具</li>
+<li>git merge -squash 在合并时使用 -squash 选项</li>
+</ul>
+<p><strong>使用 git rebase -i</strong></p>
+<p>先checkout master分支并做本地分支和远程仓库同步</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
 <pre tabindex="0" class="chroma"><code><span class="lnt" id="hl-26-1"><a class="lnlinks" href="#hl-26-1">1</a>
 </span><span class="lnt" id="hl-26-2"><a class="lnlinks" href="#hl-26-2">2</a>
-</span><span class="lnt" id="hl-26-3"><a class="lnlinks" href="#hl-26-3">3</a>
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">git checkout master
+</span></span><span class="line"><span class="cl">git pull
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>（一定要做同步，若本地代码和远端仓库不同步的话，就会出现很多远端的修改进入我们的squash时的commits当中）</p>
+<p>切换到开发分支 dev ， 并执行commits合并操作</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt" id="hl-27-1"><a class="lnlinks" href="#hl-27-1"> 1</a>
+</span><span class="lnt" id="hl-27-2"><a class="lnlinks" href="#hl-27-2"> 2</a>
+</span><span class="lnt" id="hl-27-3"><a class="lnlinks" href="#hl-27-3"> 3</a>
+</span><span class="lnt" id="hl-27-4"><a class="lnlinks" href="#hl-27-4"> 4</a>
+</span><span class="lnt" id="hl-27-5"><a class="lnlinks" href="#hl-27-5"> 5</a>
+</span><span class="lnt" id="hl-27-6"><a class="lnlinks" href="#hl-27-6"> 6</a>
+</span><span class="lnt" id="hl-27-7"><a class="lnlinks" href="#hl-27-7"> 7</a>
+</span><span class="lnt" id="hl-27-8"><a class="lnlinks" href="#hl-27-8"> 8</a>
+</span><span class="lnt" id="hl-27-9"><a class="lnlinks" href="#hl-27-9"> 9</a>
+</span><span class="lnt" id="hl-27-10"><a class="lnlinks" href="#hl-27-10">10</a>
+</span><span class="lnt" id="hl-27-11"><a class="lnlinks" href="#hl-27-11">11</a>
+</span><span class="lnt" id="hl-27-12"><a class="lnlinks" href="#hl-27-12">12</a>
+</span><span class="lnt" id="hl-27-13"><a class="lnlinks" href="#hl-27-13">13</a>
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="line"><span class="cl">git checkout dev
+</span></span><span class="line"><span class="cl">git rebase -i master
+</span></span><span class="line"><span class="cl"> <span class="c1"># 执行上面的语句后，会进入以下编辑界面</span>
+</span></span><span class="line"><span class="cl"> pick xxx: commit1 add : add xxx 
+</span></span><span class="line"><span class="cl"> pick xxx: commit2 fix: update xxxx
+</span></span><span class="line"><span class="cl"> pick xxx: commit3 fix: delete xxx
+</span></span><span class="line"><span class="cl"> pick xxx: commit4 modify : update xxxx 
+</span></span><span class="line"><span class="cl"><span class="c1"># 进入编辑模式，将除第一行的pick外，其余的pick都改成 squash（或 s），</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># 退出编辑模式，保存即可</span>
+</span></span><span class="line"><span class="cl"> pick xxx: commit1 add : add xxx 
+</span></span><span class="line"><span class="cl"> squash xxx: commit2 fix: update xxxx
+</span></span><span class="line"><span class="cl"> squash xxx: commit3 fix: delete xxx
+</span></span><span class="line"><span class="cl"> squash xxx: commit4 modify : update xxxx 
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>以上操作顺利的话，我们执行以下操作即可：</p>
+<p>git push -f 注意：squash操作后你的提交信息就变成了一次提交，会记录你之前的提交的描述信息，但是已经看不到相关的提交记录了；</p>
+<p>看了资料以后，git 在merge的时候提供了这种squash merge的操作方式，未有实践，这里也做个记录：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt" id="hl-28-1"><a class="lnlinks" href="#hl-28-1">1</a>
+</span><span class="lnt" id="hl-28-2"><a class="lnlinks" href="#hl-28-2">2</a>
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="line"><span class="cl">git checkout master
+</span></span><span class="line"><span class="cl">git merge --squash dev
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>这样可以在master节点上只看到一个提交，不管你在dev分支上有多少次提交</p>
+<p><strong>使用 git merge -squash 压缩 Git 提交</strong></p>
+<p>以下是将分支与当前分支（通常是 main）合并并压缩源分支的提交的命令语法。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt" id="hl-29-1"><a class="lnlinks" href="#hl-29-1">1</a>
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-text" data-lang="text"><span class="line"><span class="cl">git merge --squash &lt;source_branch_name_to_squash&gt;
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>我们现在将合并功能分支即。feature1 与 main 分支一起压缩。</p>
+<p>首先，我们将切换到 master 分支。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt" id="hl-30-1"><a class="lnlinks" href="#hl-30-1">1</a>
+</span><span class="lnt" id="hl-30-2"><a class="lnlinks" href="#hl-30-2">2</a>
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-text" data-lang="text"><span class="line"><span class="cl">$ git checkout main
+</span></span><span class="line"><span class="cl">Switched to branch &#39;main&#39;
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>然后，我们将使用 squash 选项执行 git merge，如下所示。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt" id="hl-31-1"><a class="lnlinks" href="#hl-31-1">1</a>
+</span><span class="lnt" id="hl-31-2"><a class="lnlinks" href="#hl-31-2">2</a>
+</span><span class="lnt" id="hl-31-3"><a class="lnlinks" href="#hl-31-3">3</a>
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-text" data-lang="text"><span class="line"><span class="cl">$ git merge --squash feature1
+</span></span><span class="line"><span class="cl">Squash commit -- not updating HEAD
+</span></span><span class="line"><span class="cl">Automatic merge went well; stopped before committing as requested
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>当我们使用 &ndash;squash 选项执行 merge 时，Git 不会像在正常合并中那样在目标分支中创建合并提交。相反，Git 接受源分支中的所有更改。feature1 并将其作为本地更改放入目标分支即 master 的工作副本中。</p>
+<p>请参阅下文。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt" id="hl-32-1"><a class="lnlinks" href="#hl-32-1">1</a>
+</span><span class="lnt" id="hl-32-2"><a class="lnlinks" href="#hl-32-2">2</a>
+</span><span class="lnt" id="hl-32-3"><a class="lnlinks" href="#hl-32-3">3</a>
+</span><span class="lnt" id="hl-32-4"><a class="lnlinks" href="#hl-32-4">4</a>
+</span><span class="lnt" id="hl-32-5"><a class="lnlinks" href="#hl-32-5">5</a>
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-text" data-lang="text"><span class="line"><span class="cl">$ git status
+</span></span><span class="line"><span class="cl">On branch main
+</span></span><span class="line"><span class="cl">Changes to be committed:
+</span></span><span class="line"><span class="cl">  (use &#34;git restore --staged &lt;file&gt;...&#34; to unstage)
+</span></span><span class="line"><span class="cl">	modified:   config.ini
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>在这里，文件 config.ini 在 feature1 分支中进行了更改。</p>
+<p>现在，剩下的就是将更改提交到 main 分支，如下所示。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt" id="hl-33-1"><a class="lnlinks" href="#hl-33-1">1</a>
+</span><span class="lnt" id="hl-33-2"><a class="lnlinks" href="#hl-33-2">2</a>
+</span><span class="lnt" id="hl-33-3"><a class="lnlinks" href="#hl-33-3">3</a>
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-text" data-lang="text"><span class="line"><span class="cl">$ git commit -am &#39;Merged and squashed the feature1 branch changes&#39;
+</span></span><span class="line"><span class="cl">[main 573b923] Squashed and merged the feature1 branch
+</span></span><span class="line"><span class="cl"> 1 file changed, 4 insertions(+)
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>因此，我们现在已将 feature1 分支中的更改合并到 main 分支，同时压缩了 feature1 分支的提交消息。我们现在在 main 分支中只有一条提交消息。</p>
+<h2 id="starch">starch</h2>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt" id="hl-34-1"><a class="lnlinks" href="#hl-34-1">1</a>
+</span><span class="lnt" id="hl-34-2"><a class="lnlinks" href="#hl-34-2">2</a>
+</span><span class="lnt" id="hl-34-3"><a class="lnlinks" href="#hl-34-3">3</a>
 </span></code></pre></td>
 <td class="lntd">
 <pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="line"><span class="cl">git stash
@@ -726,13 +1618,12 @@
 </div><p>git stash pop 命令会在 stash 应用之后丢弃（默认情况下指的是最顶部的）stash，而 git stash apply 会将其保留在存储列表中，以备日后重用（或者您可以在之后使用 git stash drop 命令移除此 stash）。</p>
 <p>除非 git stash pop 之后存在冲突，在这种情况下，它将不会删除该 stash，而使其行为与git stash apply 的命令完全相同。</p>
 <p>我们也可以使用另一种方式来实现 git stash pop，那就是：git stash apply &amp;&amp; git stash drop。</p>
-<p><strong>拓展知识点</strong></p>
 <p>到这我们基本实现了上述需求，但还需要知道一些基本的 git stash 知识，方便我们更清楚的操作。</p>
 <p>下列命令可以查看缓存的列表：</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre tabindex="0" class="chroma"><code><span class="lnt" id="hl-27-1"><a class="lnlinks" href="#hl-27-1">1</a>
-</span><span class="lnt" id="hl-27-2"><a class="lnlinks" href="#hl-27-2">2</a>
+<pre tabindex="0" class="chroma"><code><span class="lnt" id="hl-35-1"><a class="lnlinks" href="#hl-35-1">1</a>
+</span><span class="lnt" id="hl-35-2"><a class="lnlinks" href="#hl-35-2">2</a>
 </span></code></pre></td>
 <td class="lntd">
 <pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">git stash list
@@ -742,7 +1633,7 @@
 </div><p>有时我们会发现因冲突导致 git stash pop 命令并没有消除 list 的记录，这样对我们操作造成一些干扰，这时我我们可以执行以下操作，清除记录：</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre tabindex="0" class="chroma"><code><span class="lnt" id="hl-28-1"><a class="lnlinks" href="#hl-28-1">1</a>
+<pre tabindex="0" class="chroma"><code><span class="lnt" id="hl-36-1"><a class="lnlinks" href="#hl-36-1">1</a>
 </span></code></pre></td>
 <td class="lntd">
 <pre tabindex="0" class="chroma"><code class="language-sql" data-lang="sql"><span class="line"><span class="cl"><span class="n">git</span><span class="w"> </span><span class="n">stash</span><span class="w"> </span><span class="k">drop</span><span class="w">
@@ -751,7 +1642,7 @@
 </div><p>我们还可以对缓存的代码进行标识，方便查看：</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre tabindex="0" class="chroma"><code><span class="lnt" id="hl-29-1"><a class="lnlinks" href="#hl-29-1">1</a>
+<pre tabindex="0" class="chroma"><code><span class="lnt" id="hl-37-1"><a class="lnlinks" href="#hl-37-1">1</a>
 </span></code></pre></td>
 <td class="lntd">
 <pre tabindex="0" class="chroma"><code class="language-css" data-lang="css"><span class="line"><span class="cl"><span class="nt">git</span> <span class="nt">stash</span> <span class="nt">save</span> <span class="o">[</span><span class="nt">stashMessage</span><span class="o">]</span>
@@ -760,7 +1651,7 @@
 </div><p>当缓存了很多条记录的时候，我们还可以一键清除：</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre tabindex="0" class="chroma"><code><span class="lnt" id="hl-30-1"><a class="lnlinks" href="#hl-30-1">1</a>
+<pre tabindex="0" class="chroma"><code><span class="lnt" id="hl-38-1"><a class="lnlinks" href="#hl-38-1">1</a>
 </span></code></pre></td>
 <td class="lntd">
 <pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="line"><span class="cl">git stash clear
@@ -770,14 +1661,14 @@
 <p><code>git cherry-pick</code>命令的作用，就是将指定的提交（commit）应用于其他分支。</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre tabindex="0" class="chroma"><code><span class="lnt" id="hl-31-1"><a class="lnlinks" href="#hl-31-1">1</a>
-</span><span class="lnt" id="hl-31-2"><a class="lnlinks" href="#hl-31-2">2</a>
-</span><span class="lnt" id="hl-31-3"><a class="lnlinks" href="#hl-31-3">3</a>
-</span><span class="lnt" id="hl-31-4"><a class="lnlinks" href="#hl-31-4">4</a>
-</span><span class="lnt" id="hl-31-5"><a class="lnlinks" href="#hl-31-5">5</a>
-</span><span class="lnt" id="hl-31-6"><a class="lnlinks" href="#hl-31-6">6</a>
-</span><span class="lnt" id="hl-31-7"><a class="lnlinks" href="#hl-31-7">7</a>
-</span><span class="lnt" id="hl-31-8"><a class="lnlinks" href="#hl-31-8">8</a>
+<pre tabindex="0" class="chroma"><code><span class="lnt" id="hl-39-1"><a class="lnlinks" href="#hl-39-1">1</a>
+</span><span class="lnt" id="hl-39-2"><a class="lnlinks" href="#hl-39-2">2</a>
+</span><span class="lnt" id="hl-39-3"><a class="lnlinks" href="#hl-39-3">3</a>
+</span><span class="lnt" id="hl-39-4"><a class="lnlinks" href="#hl-39-4">4</a>
+</span><span class="lnt" id="hl-39-5"><a class="lnlinks" href="#hl-39-5">5</a>
+</span><span class="lnt" id="hl-39-6"><a class="lnlinks" href="#hl-39-6">6</a>
+</span><span class="lnt" id="hl-39-7"><a class="lnlinks" href="#hl-39-7">7</a>
+</span><span class="lnt" id="hl-39-8"><a class="lnlinks" href="#hl-39-8">8</a>
 </span></code></pre></td>
 <td class="lntd">
 <pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="line"><span class="cl"><span class="c1">#某提交应用于当前分支</span>
@@ -796,7 +1687,7 @@
 <blockquote>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
-<pre tabindex="0" class="chroma"><code><span class="lnt" id="hl-32-1"><a class="lnlinks" href="#hl-32-1">1</a>
+<pre tabindex="0" class="chroma"><code><span class="lnt" id="hl-40-1"><a class="lnlinks" href="#hl-40-1">1</a>
 </span></code></pre></td>
 <td class="lntd">
 <pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">$ git cherry-pick --continue
@@ -808,9 +1699,164 @@
 <p><strong>（3）<code>--quit</code></strong></p>
 <p>发生代码冲突后，退出 Cherry pick，但是不回到操作前的样子。</p>
 <h2 id="worktree">worktree</h2>
-<p>待续</p>
-<h2 id="子模块">子模块</h2>
-<p>待续</p>
+<p>比 starch命令更强大</p>
+<blockquote>
+<p><strong>仅需维护一个 repo，又可以同时在多个 branch 上工作，互不影响</strong></p>
+</blockquote>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt" id="hl-41-1"><a class="lnlinks" href="#hl-41-1">1</a>
+</span><span class="lnt" id="hl-41-2"><a class="lnlinks" href="#hl-41-2">2</a>
+</span><span class="lnt" id="hl-41-3"><a class="lnlinks" href="#hl-41-3">3</a>
+</span><span class="lnt" id="hl-41-4"><a class="lnlinks" href="#hl-41-4">4</a>
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="line"><span class="cl">git worktree add <span class="o">[</span>-f<span class="o">]</span> <span class="o">[</span>--detach<span class="o">]</span> <span class="o">[</span>--checkout<span class="o">]</span> <span class="o">[</span>--lock<span class="o">]</span> <span class="o">[</span>-b &lt;new-branch&gt;<span class="o">]</span> &lt;path&gt; <span class="o">[</span>&lt;commit-ish&gt;<span class="o">]</span>
+</span></span><span class="line"><span class="cl">git worktree list <span class="o">[</span>--porcelain<span class="o">]</span>
+</span></span><span class="line"><span class="cl">git worktree remove <span class="o">[</span>-f<span class="o">]</span> &lt;worktree&gt;
+</span></span><span class="line"><span class="cl">git worktree prune <span class="o">[</span>-n<span class="o">]</span> <span class="o">[</span>-v<span class="o">]</span> <span class="o">[</span>--expire &lt;expire&gt;<span class="o">]</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>在展开说明之前，需要和大家普及两个你可能忽视的 Git 知识点：</p>
+<ol>
+<li>
+<p>默认情况下， <code>git init</code> 或 <code>git clone</code> 初始化的 repo，只有一个 <code>worktree</code>，叫做 <code>main worktree</code></p>
+</li>
+<li>
+<p>在某一个目录下使用 Git 命令，当前目录下要么有 <code>.git</code> 目录；</p>
+<p>要么有 <code>.git</code> 文件，而 <code>.git</code> 文件，里面的内容必须是指向 <code>.git</code> 文件夹的，可以理解为一个 link</p>
+</li>
+</ol>
+<p><strong>git worktree add</strong></p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt" id="hl-42-1"><a class="lnlinks" href="#hl-42-1">1</a>
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="line"><span class="cl">git worktree add ../worktrees/<span class="o">[</span>分支名<span class="o">]</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>在当前项目目录的父目录新建文件夹 worktrees，创建[分支名]项目</p>
+<p><code>cd /worktrees/[分支名]</code> 会发现，这个分支下并不存在 <code>.git</code> 文件夹，却存在一个 <code>.git</code> 文件，打开文件，内容如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt" id="hl-43-1"><a class="lnlinks" href="#hl-43-1">1</a>
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-ini" data-lang="ini"><span class="line"><span class="cl"><span class="na">gitdir: /Users/../test/.git/worktrees/[分支名]</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><blockquote>
+<p><strong>接下来，你就可以在 feature2 分支上做一切你想做的内容了(add/commit/pull/push)，和 main worktree 互不干扰</strong></p>
+</blockquote>
+<p>如果 [分支名]分支名称带 “/” 目录分割符，需要-b参数 指定分支名称，防止生成多余嵌套的目录</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt" id="hl-44-1"><a class="lnlinks" href="#hl-44-1">1</a>
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="line"><span class="cl">git worktree add -b <span class="s2">&#34;hotfix/JIRA234-fix-naming&#34;</span> ../hotfix/JIRA234-fix-naming
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p><strong>git worktree list</strong></p>
+<p>所有的worktree 都在共用一个 repo，所以在任意一个 worktree 目录下，都可以执行如下命令来查看 worktree 列表</p>
+<p>执行完命令后，可以查看到我们上面创建的所有 worktree 信息, <code>main worktree</code> 也会显示在此处</p>
+<p>worktree 的工作做完了，也是要及时删除的，否则也会浪费很多磁盘空间</p>
+<p><strong>git worktree remove</strong></p>
+<p>这个命令很简单了，worktree 的名字叫什么，直接就 remove 什么就好了</p>
+<p>假设你创建一个 worktree，并在里面有改动，突然间这个worktree 又不需要了，此刻你按照上述命令是不能删掉了，此时就需要 <code>-f</code> 参数来帮忙了</p>
+<p>删除了 worktree，其实在 Git 的文件中，还有很多 administrative 文件是没有用的，为了保持清洁，我们还需要进一步清理</p>
+<p><strong>git worktree prune</strong></p>
+<p>这个命令就是清洁的兜底操作，可以让我们的工作始终保持整洁</p>
+<h2 id="subtree-与-submodule">Subtree 与 Submodule</h2>
+<p>subtree 和 submodule 的目的都是用于 git 子仓库管理，二者的主要区别在于，subtree 属于拷贝子仓库，而 submodule 属于引用子仓库。</p>
+<p><strong>Subtree vs Submodule</strong></p>
+<table>
+<thead>
+<tr>
+<th>维度</th>
+<th>subtree</th>
+<th>submodule</th>
+<th>优劣对比</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>空间占用</td>
+<td>subtree 在初始化 add 时，会将子仓库 copy 到父仓库中，并产生至少一次 merge 记录。所以会占用大量父仓库空间</td>
+<td>submodule 在初始化 add 时，会在父仓库新建一个 .gitmodules 文件，用于保存子仓库的 commit hash 引用。所以不会占用父仓库空间</td>
+<td>submodule 更优</td>
+</tr>
+<tr>
+<td>clone</td>
+<td>subtree add 至父仓库之后，后续的 clone 操作与单一仓库操作相同</td>
+<td>后续 clone 时 submodule 还需要 init/update 操作，且 submodule 子仓库有自己的分支</td>
+<td>subtree 更优</td>
+</tr>
+<tr>
+<td>update</td>
+<td>子仓库更新后，父仓库需要 subtree pull 操作，且命令行略长，需要指定 &ndash;prefix 参数。由于无法感知子仓库的存在，可能会产生 merge 冲突需要处理</td>
+<td>子仓库更新后，父仓库需要 submodule update 操作。父仓库只需变动子仓库 hash 引用，不会出现冲突</td>
+<td>submodule 更优</td>
+</tr>
+<tr>
+<td>commit</td>
+<td>父仓库直接提交父子仓库目录里的变动。若修改了子仓库的文件，则需要执行 subtree push</td>
+<td>父子仓库的变动需要单独分别提交。且注意先提交子仓库再提交父仓库</td>
+<td>subtree 更优</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Subtree 命令行简化</strong></p>
+<p>subtree 在操作时，命令行较长，可以使用 remote 配置简化，例如</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt" id="hl-45-1"><a class="lnlinks" href="#hl-45-1"> 1</a>
+</span><span class="lnt" id="hl-45-2"><a class="lnlinks" href="#hl-45-2"> 2</a>
+</span><span class="lnt" id="hl-45-3"><a class="lnlinks" href="#hl-45-3"> 3</a>
+</span><span class="lnt" id="hl-45-4"><a class="lnlinks" href="#hl-45-4"> 4</a>
+</span><span class="lnt" id="hl-45-5"><a class="lnlinks" href="#hl-45-5"> 5</a>
+</span><span class="lnt" id="hl-45-6"><a class="lnlinks" href="#hl-45-6"> 6</a>
+</span><span class="lnt" id="hl-45-7"><a class="lnlinks" href="#hl-45-7"> 7</a>
+</span><span class="lnt" id="hl-45-8"><a class="lnlinks" href="#hl-45-8"> 8</a>
+</span><span class="lnt" id="hl-45-9"><a class="lnlinks" href="#hl-45-9"> 9</a>
+</span><span class="lnt" id="hl-45-10"><a class="lnlinks" href="#hl-45-10">10</a>
+</span><span class="lnt" id="hl-45-11"><a class="lnlinks" href="#hl-45-11">11</a>
+</span><span class="lnt" id="hl-45-12"><a class="lnlinks" href="#hl-45-12">12</a>
+</span><span class="lnt" id="hl-45-13"><a class="lnlinks" href="#hl-45-13">13</a>
+</span><span class="lnt" id="hl-45-14"><a class="lnlinks" href="#hl-45-14">14</a>
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="line"><span class="cl"><span class="c1"># 以下为标准 subtree add 命令行示例</span>
+</span></span><span class="line"><span class="cl">git subtree add --prefix<span class="o">=</span>centos-config --squash git@github.com:kaiye/centos-config.git master
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># 可以简化为</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># 1. 先为远程子仓库配置一个别名，便于后续的 pull 与 push 操作，这里例子以 centos 为别名</span>
+</span></span><span class="line"><span class="cl">git remote add centos git@github.com:kaiye/centos-config.git <span class="c1"># gra centos ...</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># 2. 其中 --prefix= 简写为 -P，配置 --squash 表示不拉取子仓库的历史提交记录</span>
+</span></span><span class="line"><span class="cl">git subtree add -P centos-config --squash centos master
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># 后续更新子仓库可以使用</span>
+</span></span><span class="line"><span class="cl">git subtree pull -P centos-config centos master
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># 若发生 fatal: refusing to merge unrelated histories 报错，加上 --squash 参数即可</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p><strong>git submodule update 出错解决方案</strong></p>
+<p>假如在执行 git submodule update 时出现以下类似错误信息：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt" id="hl-46-1"><a class="lnlinks" href="#hl-46-1">1</a>
+</span><span class="lnt" id="hl-46-2"><a class="lnlinks" href="#hl-46-2">2</a>
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="line"><span class="cl">fatal: reference is not a tree: f869da471c5d8a185cd110bbe4842d6757b002f5
+</span></span><span class="line"><span class="cl">Unable to checkout <span class="s1">&#39;f869da471c5d8a185cd110bbe4842d6757b002f5&#39;</span> in submodule path <span class="s1">&#39;centos-config&#39;</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>发生错误的原因是，centos-config 子仓库在某电脑 A 的「本地」commit 了新的版本 「f869da471c5d8a185cd110bbe4842d6757b002f5」，且该次 commit 未 push origin。但其父级仓库中引用了该子仓库的版本号，且将引用记录 push origin，导致其他用户无法 update 。</p>
+<p>解决方案是，在电脑 A 上将子仓库 push origin 后，在其他客户机上执行 git submodule update 。或者使用 git reset，将子仓库的引用版本号还原成 origin 上存在的最新版本号。</p>
 ]]></content:encoded>
     </item>
     
